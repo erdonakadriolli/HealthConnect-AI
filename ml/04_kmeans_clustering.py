@@ -18,12 +18,10 @@ Dataset: Diabeti (Pima Indians) - me i miri per clustering
 """
 
 import pandas as pd
-import numpy as np
 import pickle
 from pathlib import Path
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, adjusted_rand_score
-from sklearn.decomposition import PCA
 
 # Konfigurimi
 PROCESSED_DIR = Path(__file__).parent.parent / "datasets" / "processed"

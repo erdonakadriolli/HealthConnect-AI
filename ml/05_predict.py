@@ -32,7 +32,7 @@ Perdorimi:
 """
 
 import pickle
-import numpy as np
+import pandas as pd
 from pathlib import Path
 
 # Rruga e modeleve
@@ -111,7 +111,6 @@ def predict_diabetes(patient_data: dict) -> dict:
         return {"error": f"Fushat mungojne: {missing}"}
 
     # Pergatit te dhenat
-    import pandas as pd
     values = pd.DataFrame([[patient_data[f] for f in DIABETES_FEATURES]], columns=DIABETES_FEATURES)
 
     # Skalo

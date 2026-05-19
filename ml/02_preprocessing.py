@@ -22,11 +22,10 @@ Output:
 """
 
 import pandas as pd
-import numpy as np
+import pickle
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-import pickle
 
 # Konfigurimi
 RAW_DIR = Path(__file__).parent.parent / "datasets"

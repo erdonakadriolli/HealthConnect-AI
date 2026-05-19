@@ -148,7 +148,6 @@ def plot_kmeans_clusters():
     # Plot 1: Cluster-at K-Means
     ax = axes[0]
     cluster_colors = ['#2ecc71', '#f39c12', '#e74c3c']  # gjelber, portokalli, kuqe
-    cluster_order_for_legend = sorted(risk_labels.keys(), key=lambda c: list(risk_labels.values())[c].count('Ulet') + list(risk_labels.values())[c].count('Mesatar'))
 
     # Renditje sipas: i Ulet -> Mesatar -> i Larte
     risk_order = ['Rrezik i Ulet', 'Rrezik Mesatar', 'Rrezik i Larte']

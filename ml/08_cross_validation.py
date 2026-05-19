@@ -17,10 +17,8 @@ Output:
 """
 
 import pandas as pd
-import numpy as np
 import warnings
 from pathlib import Path
-import pickle
 
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier

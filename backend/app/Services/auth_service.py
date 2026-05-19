@@ -40,7 +40,10 @@ class AuthService:
         return {"access_token": access_token, "refresh_token": refresh_token}
 
     def refresh(self, refresh_token: str):
-        payload = decode_token(refresh_token)
+        try:
+            payload = decode_token(refresh_token)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token.")
         if payload.get("type") != "refresh":
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token type.")
 
@@ -57,7 +60,10 @@ class AuthService:
         return {"access_token": access_token, "refresh_token": new_refresh}
 
     def get_current_user_from_token(self, token: str):
-        payload = decode_token(token)
+        try:
+            payload = decode_token(token)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired access token.")
         if payload.get("type") != "access":
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token type.")
         user_id = payload.get("sub")
