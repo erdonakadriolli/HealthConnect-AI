@@ -22,9 +22,8 @@ Një platformë për diagnostikim prediktiv të diabetit përmes Inteligjencës 
 
 HealthConnect AI bashkon tri fusha:
 
-1. **Menaxhim Klinik** — Mjekët, pacientët, takimet, recetat dhe historiku mjekësor menaxhohen dixhitalisht.
-2. **Diagnostikim me AI** — Modeli ML (Random Forest) parashikon rrezikun e diabetit bazuar në 8 tregues klinikë; K-Means grupon pacientët në 3 kategori rreziku.
-3. **OCR e analizave** — Mjeku ngarkon foton e analizave laboratorike dhe Claude Sonnet 4.6 (vision) ekstrakton automatikisht vlerat në formë të strukturuar JSON, që pastaj plotësojnë formën e parashikimit.
+ **Diagnostikim me AI** — Modeli ML (Random Forest) parashikon rrezikun e diabetit bazuar në 8 tregues klinikë; K-Means grupon pacientët në 3 kategori rreziku.
+ **OCR e analizave** — Mjeku ngarkon foton e analizave laboratorike dhe Claude Sonnet 4.6 (vision) ekstrakton automatikisht vlerat në formë të strukturuar JSON, që pastaj plotësojnë formën e parashikimit.
 
 ---
 
