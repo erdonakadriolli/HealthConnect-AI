@@ -15,7 +15,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    email: "",
+    login_email: "",
     password: "",
   });
 
@@ -35,7 +35,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const data = await loginUser(form);
+      const payload = { email: form.login_email, password: form.password };
+      const data = await loginUser(payload);
       saveTokens(data.access_token, data.refresh_token);
       navigate("/dashboard");
     } catch {
@@ -100,11 +101,11 @@ export default function Login() {
         >
           <InputField
             variant="green"
-            type="email"
+            type="text"
             icon={<Mail size={18} />}
             label="Email"
-            name="email"
-            value={form.email}
+            name="login_email"
+            value={form.login_email}
             onChange={handleChange}
             placeholder="Enter email"
           />

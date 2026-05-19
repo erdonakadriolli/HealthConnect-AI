@@ -23,7 +23,7 @@ export default function Register() {
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
-    email: "",
+    login_email: "",
     password: "",
   });
 
@@ -43,7 +43,13 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await registerUser(form);
+      const payload = {
+        first_name: form.first_name,
+        last_name: form.last_name,
+        email: form.login_email,
+        password: form.password,
+      };
+      await registerUser(payload);
       navigate("/login");
     } catch {
       setError("Register failed. Check your data or try another email.");
@@ -137,11 +143,11 @@ export default function Register() {
 
           <InputField
             variant="green"
-            type="email"
+            type="text"
             icon={<Mail size={18} />}
             label="Email"
-            name="email"
-            value={form.email}
+            name="login_email"
+            value={form.login_email}
             onChange={handleChange}
             placeholder="Enter email"
           />
