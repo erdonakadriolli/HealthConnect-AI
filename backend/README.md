@@ -18,7 +18,7 @@
 - RBAC dependency (`require_permissions`)
 - ML endpoints:
   - `POST /api/predict/diabetes`
-  - `POST /api/predict/heart`
+  - `POST /api/predict/diabetes/extract` (OCR e analizave me Claude vision)
 - WebSockets:
   - `/ws/notifications/{user_id}`
   - `/ws/chat/{room_id}`

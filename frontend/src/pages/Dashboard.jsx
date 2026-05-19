@@ -1,4 +1,4 @@
-import { Activity, Droplets, HeartPulse } from "lucide-react";
+import { Activity, Droplets } from "lucide-react";
 
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
@@ -47,15 +47,15 @@ export default function Dashboard() {
             color: "rgba(15, 23, 42, 0.68)",
           }}
         >
-          Welcome to HealthConnect AI. Choose which prediction model you want to
-          use.
+          Welcome to HealthConnect AI. Run the diabetes prediction model to
+          assess patient risk.
         </p>
 
         <div
           style={{
             marginTop: "34px",
             display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gridTemplateColumns: "minmax(0, 1fr)",
             gap: "18px",
           }}
         >
@@ -65,14 +65,6 @@ export default function Dashboard() {
             icon={<Droplets size={26} />}
             title="Diabetes Prediction"
             description="Check diabetes risk"
-          />
-
-          <ActionCard
-            to="/heart"
-            variant="red"
-            icon={<HeartPulse size={26} />}
-            title="Heart Disease Prediction"
-            description="Check heart disease risk"
           />
         </div>
       </Card>

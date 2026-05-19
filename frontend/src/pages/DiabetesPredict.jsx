@@ -1,16 +1,21 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Activity,
   Dna,
   Droplets,
+  FileImage,
   Gauge,
   Loader2,
   Scale,
   Syringe,
+  Upload,
   UserRound,
 } from "lucide-react";
 
-import { predictDiabetes } from "../api/predictionApi";
+import {
+  extractDiabetesFromImage,
+  predictDiabetes,
+} from "../api/predictionApi";
 
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
@@ -20,6 +25,17 @@ import Button from "../components/ui/Button";
 import FormGrid from "../components/ui/FormGrid";
 import ErrorBox from "../components/ui/ErrorBox";
 import PredictionModal from "../components/ui/PredictionModal";
+
+const FIELD_KEYS = [
+  "Pregnancies",
+  "Glucose",
+  "BloodPressure",
+  "SkinThickness",
+  "Insulin",
+  "BMI",
+  "DiabetesPedigreeFunction",
+  "Age",
+];
 
 export default function DiabetesPredict() {
   const [form, setForm] = useState({
@@ -38,11 +54,58 @@ export default function DiabetesPredict() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [uploadName, setUploadName] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [extractedKeys, setExtractedKeys] = useState([]);
+  const fileInputRef = useRef(null);
+
   function handleChange(e) {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
     });
+  }
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError("");
+    setUploading(true);
+    setUploadName(file.name);
+
+    try {
+      const data = await extractDiabetesFromImage(file);
+      const next = { ...form };
+      const filled = [];
+
+      for (const key of FIELD_KEYS) {
+        const value = data?.[key];
+        if (value !== null && value !== undefined && value !== "") {
+          next[key] = String(value);
+          filled.push(key);
+        }
+      }
+
+      setForm(next);
+      setExtractedKeys(filled);
+
+      if (filled.length === 0) {
+        setError(
+          "Nuk u gjet asnje vlere ne imazh. Sigurohu qe analiza eshte e dukshme."
+        );
+      }
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setError(
+        typeof detail === "string"
+          ? detail
+          : "Leximi i imazhit deshtoi. Sigurohu qe backend-i po ekzekutohet dhe ANTHROPIC_API_KEY eshte vendosur."
+      );
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   async function handleSubmit(e) {
@@ -103,6 +166,83 @@ export default function DiabetesPredict() {
           metabolic, genetic, and physiological factors to detect patterns
           commonly associated with diabetes risk. The result is not a medical
           diagnosis, but it can help support early screening and decision-making.
+        </div>
+
+        <div
+          style={{
+            marginBottom: "24px",
+            padding: "18px",
+            borderRadius: "18px",
+            background: "rgba(59, 130, 246, 0.07)",
+            border: "1px dashed rgba(59, 130, 246, 0.28)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              fontSize: "15px",
+              fontWeight: "700",
+              color: "#1e40af",
+            }}
+          >
+            <FileImage size={18} />
+            Lexo analizat prej fotos (auto-fill me AI)
+          </div>
+
+          <div style={{ fontSize: "13px", color: "#475569", lineHeight: "1.5" }}>
+            Ngarko foton e analizes laboratorike. Modeli i vizionit do te
+            ekstraktoje vlerat ne formen e diabetit me poshte. Mund t&apos;i
+            redaktosh para se te besh parashikim.
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleFile}
+            style={{ display: "none" }}
+          />
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 16px",
+                borderRadius: "12px",
+                border: "1px solid rgba(59, 130, 246, 0.35)",
+                background: "white",
+                color: "#1e40af",
+                fontWeight: "700",
+                fontSize: "14px",
+                cursor: uploading ? "wait" : "pointer",
+                opacity: uploading ? 0.7 : 1,
+              }}
+            >
+              {uploading ? <Loader2 size={16} /> : <Upload size={16} />}
+              {uploading ? "Po lexohet imazhi..." : "Zgjidh foto"}
+            </button>
+
+            {uploadName && !uploading && (
+              <span style={{ fontSize: "13px", color: "#475569" }}>
+                {uploadName}
+                {extractedKeys.length > 0 && (
+                  <strong style={{ marginLeft: "8px", color: "#15803d" }}>
+                    ({extractedKeys.length} fusha u plotesuan)
+                  </strong>
+                )}
+              </span>
+            )}
+          </div>
         </div>
 
         <FormGrid onSubmit={handleSubmit}>

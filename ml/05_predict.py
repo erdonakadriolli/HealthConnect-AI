@@ -4,13 +4,12 @@ HealthConnect AI - Skripti 05: Funksioni Predict
 Autor: Erdona Kadriolli
 
 Qellimi: Ky skript eshte "ura" mes modeleve ML dhe backend-it.
-         Fatlumi do ta importoje kete modul ne FastAPI dhe do ta
-         therrase kur nje mjek fut te dhenat e nje pacienti.
+         Backend-i e importon kete modul ne FastAPI dhe e therret
+         kur nje mjek fut te dhenat e nje pacienti.
 
 Perdorimi:
-  from ml.predict import predict_diabetes, predict_heart, predict_risk_group
+  from ml.predict import predict_diabetes
 
-  # Parashikimi i diabetit
   result = predict_diabetes({
       "Pregnancies": 2,
       "Glucose": 148,
@@ -64,13 +63,10 @@ def load_scaler(dataset_name: str):
 
 # Ngarko modelet me te mira (bazuar ne rezultatet e trajnimit)
 # Diabeti: Random Forest ishte me i miri (F1=0.7963)
-# Zemra  : kNN ishte me i miri (F1=0.8732)
 try:
     MODEL_DIABETES  = load_model("diabetes_random_forest.pkl")
-    MODEL_HEART     = load_model("heart_knn.pkl")
     MODEL_KMEANS    = load_model("diabetes_kmeans.pkl")
     SCALER_DIABETES = load_scaler("diabetes")
-    SCALER_HEART    = load_scaler("heart")
     print("[OK] Te gjitha modelet u ngarkuan me sukses.")
 except FileNotFoundError as e:
     print(f"[GABIM] {e}")
@@ -84,11 +80,6 @@ except FileNotFoundError as e:
 DIABETES_FEATURES = [
     "Pregnancies", "Glucose", "BloodPressure", "SkinThickness",
     "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"
-]
-
-HEART_FEATURES = [
-    "age", "sex", "cp", "trestbps", "chol", "fbs",
-    "restecg", "thalach", "exang", "oldpeak", "slope", "ca", "thal"
 ]
 
 
@@ -160,62 +151,6 @@ def predict_diabetes(patient_data: dict) -> dict:
     }
 
 
-def predict_heart(patient_data: dict) -> dict:
-    """
-    Parashikon rrezikun e semundjes se zemres per nje pacient.
-
-    Args:
-        patient_data: dict me fushat:
-            age, sex, cp, trestbps, chol, fbs,
-            restecg, thalach, exang, oldpeak, slope, ca, thal
-
-    Returns:
-        dict me:
-            prediction    : 0 (jo semundje) ose 1 (semundje)
-            probability   : probabiliteti (0.0 - 1.0)
-            risk_level    : "I ulet" / "Mesatar" / "I larte"
-            model_used    : emri i modelit
-            message       : mesazh per mjekun
-    """
-    # Valido inputin
-    missing = [f for f in HEART_FEATURES if f not in patient_data]
-    if missing:
-        return {"error": f"Fushat mungojne: {missing}"}
-
-    # Pergatit te dhenat
-    import pandas as pd
-    values = pd.DataFrame([[patient_data[f] for f in HEART_FEATURES]], columns=HEART_FEATURES)
-
-    # Skalo
-    values_scaled = pd.DataFrame(SCALER_HEART.transform(values), columns=HEART_FEATURES)
-
-    # Parashiko
-    prediction  = int(MODEL_HEART.predict(values_scaled)[0])
-    probability = float(MODEL_HEART.predict_proba(values_scaled)[0][1])
-
-    # Niveli i rrezikut
-    if probability < 0.3:
-        risk_level = "I ulet"
-    elif probability < 0.6:
-        risk_level = "Mesatar"
-    else:
-        risk_level = "I larte"
-
-    # Mesazhi per mjekun
-    if prediction == 1:
-        message = f"Pacienti ka {probability*100:.1f}% probabilitet per semundje zemre. Rekomandohet konsulte kardiologjike."
-    else:
-        message = f"Rreziku i semundjes se zemres eshte i ulet ({probability*100:.1f}%). Kontrolle rutine rekomandohen."
-
-    return {
-        "prediction": prediction,
-        "probability": round(probability, 4),
-        "risk_level": risk_level,
-        "model_used": "kNN",
-        "message": message
-    }
-
-
 # =============================================================================
 # TESTIMI I DREJTPERDREJTE
 # =============================================================================
@@ -253,17 +188,6 @@ def run_tests():
         "Age": 31
     })
     for key, val in result2.items():
-        print(f"  {key:<15}: {val}")
-
-    print("\n" + "="*60)
-    print("  TEST 3: Parashikim semundjes se zemres")
-    print("="*60)
-    result3 = predict_heart({
-        "age": 63, "sex": 1, "cp": 3, "trestbps": 145,
-        "chol": 233, "fbs": 1, "restecg": 0, "thalach": 150,
-        "exang": 0, "oldpeak": 2.3, "slope": 0, "ca": 0, "thal": 1
-    })
-    for key, val in result3.items():
         print(f"  {key:<15}: {val}")
 
     print("\n" + "="*60)

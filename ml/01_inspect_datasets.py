@@ -1,14 +1,13 @@
 """
-HealthConnect AI - Skripti 01: Inspektimi i Dataseteve
+HealthConnect AI - Skripti 01: Inspektimi i Dataset-it
 =======================================================
 Autor: Erdona Kadriolli
-Qellimi: Lexon dataset-et e Diabetit dhe Semundjeve te Zemres,
-         tregon statistika baze, dhe verifikon strukturen.
+Qellimi: Lexon dataset-in e Diabetit, tregon statistika baze
+         dhe verifikon strukturen.
 
 Si te perdoret:
-    1. Vendos CSV-te ne dosjen datasets/:
+    1. Vendos CSV-ne ne dosjen datasets/:
        - datasets/diabetes.csv
-       - datasets/heart.csv
     2. Ekzekuto: python 01_inspect_datasets.py
 """
 
@@ -70,31 +69,21 @@ def inspect_dataset(filename: str, name: str) -> pd.DataFrame | None:
 
 def main():
     print("\n" + "="*60)
-    print("  HEALTHCONNECT AI - INSPEKTIMI I DATASETEVE")
+    print("  HEALTHCONNECT AI - INSPEKTIMI I DATASET-IT")
     print("="*60)
-    print(f"  Dosja e dataset-eve: {DATASETS_DIR}")
-    
-    # Diabeti
+    print(f"  Dosja e dataset-it: {DATASETS_DIR}")
+
     df_diabetes = inspect_dataset("diabetes.csv", "Diabeti (Pima Indians)")
-    
-    # Zemra
-    df_heart = inspect_dataset("heart.csv", "Semundjet e Zemres")
-    
-    # Permbledhje
+
     print(f"\n{'='*60}")
     print(f"  PERMBLEDHJE")
     print(f"{'='*60}")
-    
+
     if df_diabetes is not None:
         print(f"  [OK] Diabet : {len(df_diabetes)} rreshta x {len(df_diabetes.columns)} kolona")
     else:
         print(f"  [MUNGON] Diabet")
-    
-    if df_heart is not None:
-        print(f"  [OK] Zemer  : {len(df_heart)} rreshta x {len(df_heart.columns)} kolona")
-    else:
-        print(f"  [MUNGON] Zemer")
-    
+
     print()
 
 

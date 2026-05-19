@@ -13,16 +13,9 @@ class MLService:
         module = module_from_spec(spec)
         spec.loader.exec_module(module)
         self.predict_diabetes = module.predict_diabetes
-        self.predict_heart = module.predict_heart
 
     def diabetes(self, payload: dict) -> dict:
         result = self.predict_diabetes(payload)
-        if "error" in result:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result["error"])
-        return result
-
-    def heart(self, payload: dict) -> dict:
-        result = self.predict_heart(payload)
         if "error" in result:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result["error"])
         return result

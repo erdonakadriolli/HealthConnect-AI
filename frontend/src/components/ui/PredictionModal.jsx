@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-export default function PredictionModal({ result, onClose, type = "heart" }) {
+export default function PredictionModal({ result, onClose, type = "diabetes" }) {
   const probability = Math.round(Number(result?.probability || 0) * 100);
   const riskText = translateRisk(result?.risk_level);
 

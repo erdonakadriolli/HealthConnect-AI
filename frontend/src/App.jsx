@@ -8,7 +8,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import DiabetesPredict from "./pages/DiabetesPredict";
-import HeartPredict from "./pages/HeartPredict";
 
 export default function App() {
   return (
@@ -50,15 +49,6 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DiabetesPredict />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/heart"
-          element={
-            <ProtectedRoute>
-              <HeartPredict />
             </ProtectedRoute>
           }
         />

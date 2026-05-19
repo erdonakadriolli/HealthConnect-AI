@@ -34,20 +34,15 @@ class DiabetesInput(BaseModel):
     Age: int
 
 
-class HeartInput(BaseModel):
-    age: int
-    sex: int
-    cp: int
-    trestbps: float
-    chol: float
-    fbs: int
-    restecg: int
-    thalach: float
-    exang: int
-    oldpeak: float
-    slope: int
-    ca: int
-    thal: int
+class DiabetesExtractResponse(BaseModel):
+    Pregnancies: int | None = None
+    Glucose: float | None = None
+    BloodPressure: float | None = None
+    SkinThickness: float | None = None
+    Insulin: float | None = None
+    BMI: float | None = None
+    DiabetesPedigreeFunction: float | None = None
+    Age: int | None = None
 
 
 class UserRead(BaseModel):

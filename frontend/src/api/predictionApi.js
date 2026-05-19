@@ -5,7 +5,13 @@ export async function predictDiabetes(data) {
   return res.data;
 }
 
-export async function predictHeart(data) {
-  const res = await api.post("/api/predict/heart", data);
+export async function extractDiabetesFromImage(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await api.post("/api/predict/diabetes/extract", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
   return res.data;
 }

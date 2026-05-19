@@ -10,9 +10,8 @@ Modelet:
   4. Neural Network MLP - Arkitektura 1 (e thjesht)
   5. Neural Network MLP - Arkitektura 2 (e thelle)
 
-Dataset-et:
+Dataset:
   - Diabeti (Pima Indians)
-  - Semundjet e Zemres (UCI Heart)
 
 Output:
   models/diabetes_knn.pkl
@@ -20,11 +19,6 @@ Output:
   models/diabetes_logreg.pkl
   models/diabetes_mlp1.pkl
   models/diabetes_mlp2.pkl
-  models/heart_knn.pkl
-  models/heart_rf.pkl
-  models/heart_logreg.pkl
-  models/heart_mlp1.pkl
-  models/heart_mlp2.pkl
   models/results.csv  (te gjitha metrikat)
 """
 
@@ -222,19 +216,13 @@ def main():
     print("  HEALTHCONNECT AI - TRAJNIMI I MODELEVE ML")
     print("="*60)
     print(f"  Modele: kNN, Random Forest, Logistic Regression, MLP x2")
-    print(f"  Dataset-e: Diabet + Zemra")
+    print(f"  Dataset: Diabet")
 
     all_results = []
 
-    # Trajno per Diabetin
     results_diabetes = process_dataset("diabetes", target_col="Outcome")
     all_results.extend(results_diabetes)
 
-    # Trajno per Zemren
-    results_heart = process_dataset("heart", target_col="target")
-    all_results.extend(results_heart)
-
-    # Tabela krahasuese
     print_summary(all_results)
 
     print(f"\n{'='*60}")

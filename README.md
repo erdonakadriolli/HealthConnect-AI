@@ -1,6 +1,6 @@
 # 🏥 HealthConnect AI
 
-Një platformë **Full-Stack** mjekësore për menaxhimin e klinikave dhe diagnostikimin prediktiv të sëmundjeve përmes Inteligjencës Artificiale.
+Një platformë për diagnostikim prediktiv të diabetit përmes Inteligjencës Artificiale, me lexim automatik të analizave laboratorike nga fotot.
 
 > **Projekt akademik** — Laboratorike 2 (Programim) & Machine Learning Models (MM)  
 > Universiteti për Biznes dhe Teknologji — UBT  
@@ -12,7 +12,7 @@ Një platformë **Full-Stack** mjekësore për menaxhimin e klinikave dhe diagno
 
 | Anëtari | Roli | Përgjegjësia |
 |---------|------|--------------|
-| **Erdona Kadriolli** | Data & ML Engineer | Dataset-et, Preprocessing, Modelet ML, API Docs |
+| **Erdona Kadriolli** | Data & ML Engineer | Dataset-et, Preprocessing, Modelet ML, OCR me Claude vision, API Docs |
 | **Fatlum Syla** | Backend Developer | FastAPI, 24 Tabelat, JWT Auth, WebSockets |
 | **Yll Bytyqi** | Frontend Developer | React + Vite, Dashboard, Real-Time Chat |
 
@@ -20,10 +20,11 @@ Një platformë **Full-Stack** mjekësore për menaxhimin e klinikave dhe diagno
 
 ## 🧠 Çfarë bën ky sistem?
 
-HealthConnect AI bashkon dy fusha:
+HealthConnect AI bashkon tri fusha:
 
-1. **Menaxhim Klinike** — Mjekët, pacientët, takimet, recetat dhe historiku mjekësor menaxhohen dixhitalisht
-2. **Diagnostikim me AI** — Modelet ML parashikojnë rrezikun e diabetit dhe sëmundjeve të zemrës bazuar në analizat laboratorike
+1. **Menaxhim Klinik** — Mjekët, pacientët, takimet, recetat dhe historiku mjekësor menaxhohen dixhitalisht.
+2. **Diagnostikim me AI** — Modeli ML (Random Forest) parashikon rrezikun e diabetit bazuar në 8 tregues klinikë; K-Means grupon pacientët në 3 kategori rreziku.
+3. **OCR e analizave** — Mjeku ngarkon foton e analizave laboratorike dhe Claude Sonnet 4.6 (vision) ekstrakton automatikisht vlerat në formë të strukturuar JSON, që pastaj plotësojnë formën e parashikimit.
 
 ---
 
@@ -36,6 +37,7 @@ HealthConnect AI bashkon dy fusha:
 | **Databaza SQL** | PostgreSQL |
 | **Databaza NoSQL** | MongoDB / Redis |
 | **ML** | scikit-learn, pandas, numpy |
+| **AI Vision (OCR)** | Anthropic Claude Sonnet 4.6 |
 | **Real-Time** | WebSockets |
 | **Auth** | JWT (Access + Refresh Tokens) |
 
@@ -47,52 +49,59 @@ HealthConnect AI bashkon dy fusha:
 HealthConnect-AI/
 │
 ├── backend/                    # Fatlumi — FastAPI
-│   ├── controllers/            # Route handlers
-│   ├── services/               # Business logic
-│   ├── repositories/           # Database queries
-│   ├── models/                 # SQLAlchemy models
-│   └── main.py                 # Entry point
+│   ├── app/
+│   │   ├── Controllers/        # auth_controller, ml_controller, websocket_controller
+│   │   ├── Services/           # auth_service, ml_service, ocr_service
+│   │   ├── Repositories/       # auth_repository
+│   │   ├── models.py           # SQLAlchemy (24 tabela)
+│   │   ├── schemas.py          # Pydantic schemas
+│   │   ├── security.py         # JWT + password hashing
+│   │   ├── database.py         # SQLAlchemy engine
+│   │   └── deps.py             # Dependencies (RBAC, current_user)
+│   ├── main.py                 # Entry point
+│   └── requirements.txt
 │
 ├── frontend/                   # Ylli — React + Vite
 │   ├── src/
-│   │   ├── pages/              # Login, Dashboard, Patients, AI
-│   │   ├── components/         # Komponente te riperdorshme
-│   │   └── services/           # API calls
+│   │   ├── pages/              # Login, Register, Dashboard, DiabetesPredict
+│   │   ├── components/         # Navbar, ProtectedRoute, ui/*
+│   │   ├── api/                # axios, authApi, predictionApi
+│   │   └── utils/              # token storage
 │   └── package.json
 │
 ├── ml/                         # Erdona — Machine Learning
-│   ├── 00_generate_datasets.py # Gjenerimi i dataseteve
-│   ├── 01_inspect_datasets.py  # Inspektimi i dataseteve
+│   ├── 00_generate_datasets.py # Gjenerimi i dataset-it
+│   ├── 01_inspect_datasets.py  # Inspektimi i dataset-it
 │   ├── 02_preprocessing.py     # Pastrimi + skalimi + ndarja
-│   ├── 03_train_models.py      # Trajnimi i 4 modeleve
+│   ├── 03_train_models.py      # Trajnimi i 5 modeleve
 │   ├── 04_kmeans_clustering.py # K-Means clustering
-│   └── 05_predict.py           # Funksioni predict per backend
+│   ├── 05_predict.py           # Funksioni predict për backend
+│   ├── 06_visualizations.py    # Confusion matrix, feature importance, etj.
+│   ├── 07_hyperparameter_tuning.py
+│   └── 08_cross_validation.py
 │
-├── datasets/                   # Te dhenat
+├── datasets/                   # Të dhënat
 │   ├── diabetes.csv            # Pima Indians Diabetes (768 rreshta)
-│   ├── heart.csv               # UCI Heart Disease (303 rreshta)
-│   └── processed/              # Te dhenat e pastruara
+│   └── processed/              # Të dhënat e pastruara
 │       ├── diabetes_train.csv
 │       ├── diabetes_test.csv
-│       ├── heart_train.csv
-│       ├── heart_test.csv
 │       └── scalers.pkl
 │
 ├── models/                     # Modelet e trajnuara (.pkl)
-│   ├── diabetes_random_forest.pkl
+│   ├── diabetes_random_forest.pkl    ⭐ (modeli kryesor)
 │   ├── diabetes_knn.pkl
 │   ├── diabetes_logistic_regression.pkl
 │   ├── diabetes_mlp_arkitektura_1.pkl
 │   ├── diabetes_mlp_arkitektura_2.pkl
-│   ├── heart_knn.pkl
-│   ├── heart_random_forest.pkl
-│   ├── heart_logistic_regression.pkl
-│   ├── heart_mlp_arkitektura_1.pkl
-│   ├── heart_mlp_arkitektura_2.pkl
 │   ├── diabetes_kmeans.pkl
+│   ├── tuned_diabetes_*.pkl          # Modelet pas hyperparameter tuning
 │   ├── results.csv
+│   ├── tuning_results.csv
+│   ├── cross_validation_results.csv
 │   └── kmeans_results.csv
 │
+├── visualizations/             # Grafiket (.png)
+├── ERD.png                     # Diagrami i bazës së të dhënave
 └── README.md
 ```
 
@@ -106,6 +115,7 @@ HealthConnect-AI/
 - Node.js 18+
 - PostgreSQL 14+
 - Git
+- **API key i Anthropic** (për leximin e analizave nga fotot) — merre falas në https://console.anthropic.com
 
 ---
 
@@ -137,10 +147,10 @@ pip install -r requirements.txt
 
 # Konfiguro .env
 cp .env.example .env
-# Edito .env me kredencialet e databazës
-
-# Ekzekuto migrimet
-python manage.py migrate
+# Edito .env me kredencialet e databazës dhe API key-in:
+#   DATABASE_URL=postgresql://...
+#   JWT_SECRET=...
+#   ANTHROPIC_API_KEY=sk-ant-...
 
 # Starto serverin
 uvicorn main:app --reload
@@ -148,6 +158,8 @@ uvicorn main:app --reload
 
 Backend do të jetë aktiv në: `http://localhost:8000`  
 Swagger UI: `http://localhost:8000/docs`
+
+> ⚠️ Pa `ANTHROPIC_API_KEY`, endpoint-i `/api/predict/diabetes/extract` kthen 500. Parashikimi i thjeshtë (`/api/predict/diabetes`) funksionon pa të.
 
 ---
 
@@ -173,9 +185,12 @@ Frontend do të jetë aktiv në: `http://localhost:5173`
 cd ml
 
 # Instalo dependencies
-pip install pandas numpy scikit-learn
+pip install pandas numpy scikit-learn matplotlib seaborn
 
-# Hapi 1: Inspekto dataset-et
+# Hapi 0: Gjenero dataset-in (opsionale, vetëm nëse mungon diabetes.csv)
+python 00_generate_datasets.py
+
+# Hapi 1: Inspekto dataset-in
 python 01_inspect_datasets.py
 
 # Hapi 2: Preprocessing
@@ -189,6 +204,15 @@ python 04_kmeans_clustering.py
 
 # Hapi 5: Testo funksionin predict
 python 05_predict.py
+
+# Hapi 6: Gjenero grafiket
+python 06_visualizations.py
+
+# Hapi 7: Hyperparameter tuning (opsionale, merr 5-15 min)
+python 07_hyperparameter_tuning.py
+
+# Hapi 8: Cross-validation (opsionale)
+python 08_cross_validation.py
 ```
 
 ---
@@ -205,16 +229,6 @@ python 05_predict.py
 | Logistic Regression | 75.32% | 0.6481 |
 | MLP Arkitektura 1 | 74.68% | 0.5979 |
 
-### Sëmundjet e Zemrës (UCI Heart Disease)
-
-| Modeli | Accuracy | F1-Score |
-|--------|----------|----------|
-| **kNN** ⭐ | 85.25% | 0.8732 |
-| Random Forest | 83.61% | 0.8649 |
-| Logistic Regression | 81.97% | 0.8493 |
-| MLP Arkitektura 2 | 81.97% | 0.8451 |
-| MLP Arkitektura 1 | 62.30% | 0.5106 |
-
 ### K-Means Clustering (3 Grupe Rreziku)
 
 | Grupi | Pacientë | % Diabetik |
@@ -222,6 +236,23 @@ python 05_predict.py
 | Rrezik i Ulët | 322 (41.9%) | 8.1% |
 | Rrezik Mesatar | 239 (31.1%) | 53.1% |
 | Rrezik i Lartë | 207 (27.0%) | 55.6% |
+
+---
+
+## 👁️ OCR e Analizave (Claude Vision)
+
+Mjeku ngarkon foton e analizave laboratorike te faqja **Diabetes Prediction**, dhe sistemi:
+
+1. E dërgon imazhin (base64) te Claude Sonnet 4.6 me një prompt të strukturuar.
+2. Modeli kthen JSON me 8 fushat e nevojshme për parashikim:
+   `Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age`.
+3. Formulari plotësohet automatikisht; mjeku mund t'i redaktojë vlerat para se të bëjë parashikimin.
+
+**Karakteristikat:**
+- Formate të pranuara: JPEG, PNG, WEBP, GIF
+- Madhësia maksimale: 10 MB
+- Fusha që nuk gjenden në foto kthehen si `null` (nuk shpiken vlera)
+- Modeli kupton kontekstin (p.sh. "Glukoza në gjak" → fusha `Glucose`)
 
 ---
 
@@ -254,9 +285,9 @@ PUT    /api/appointments/{id}    # Ndrysho takim
 
 ### Machine Learning ⭐
 ```
-POST   /api/predict/diabetes     # Parashiko diabetin
-POST   /api/predict/heart        # Parashiko sëmundjen e zemrës
-GET    /api/predict/history/{id} # Historiku i parashikimeve
+POST   /api/predict/diabetes          # Parashiko diabetin (JSON me 8 fusha)
+POST   /api/predict/diabetes/extract  # OCR e analizave (multipart, foto) — Claude vision
+GET    /api/predict/history/{id}      # Historiku i parashikimeve
 ```
 
 ### Raportet
@@ -275,6 +306,7 @@ GET    /api/reports/patient/{id}/excel  # Eksporto Excel
 - **RBAC** — Role-Based Access Control (Admin, Mjek, Pacient)
 - **SQL Injection Protection** — ORM queries + input validation
 - **Input Validation** — Pydantic models për të gjitha request-et
+- **API key i fshehur** — `ANTHROPIC_API_KEY` lexohet vetëm nga environment, asnjëherë nuk del te klienti
 - **HTTPS** — i detyrueshëm në production
 
 ---
@@ -298,7 +330,7 @@ WS  /ws/chat/{room_id}            # Chat mjek-pacient
 **14 Tabelat e Domenit (Mjekësor):**
 `Patients, Doctors, Appointments, Specializations, MedicalRecords, LabTests, Prescriptions, Medications, Symptoms, SymptomReports, Clinics, Vaccinations, EmergencyContacts, InsurancePolicies`
 
-ERD Diagram: shih dokumentacionin në `/docs/erd.png`
+ERD Diagram: `ERD.png` në rrënjën e repository-t.
 
 ---
 
@@ -310,12 +342,11 @@ ERD Diagram: shih dokumentacionin në `/docs/erd.png`
 
 ---
 
-## 📚 Datasetet
+## 📚 Dataset-i
 
 | Dataset | Burimi | Rreshta | Features |
 |---------|--------|---------|----------|
 | Pima Indians Diabetes | NIDDK, Smith et al. 1988 | 768 | 8 |
-| UCI Heart Disease | Cleveland Clinic, Detrano et al. 1989 | 303 | 13 |
 
 ---
 

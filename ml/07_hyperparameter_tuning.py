@@ -274,16 +274,10 @@ def main():
     print(f"  Total trajnime per dataset: ~440 trajnime")
     
     all_results = []
-    
-    # Diabeti
+
     results_diabetes = process_dataset("diabetes", "Outcome")
     all_results.extend(results_diabetes)
-    
-    # Zemra
-    results_heart = process_dataset("heart", "target")
-    all_results.extend(results_heart)
-    
-    # Krahasimi
+
     print_comparison(all_results)
     
     print(f"\n{'='*60}")

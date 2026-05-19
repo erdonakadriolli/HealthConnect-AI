@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity,
   Droplets,
-  HeartPulse,
   Home,
   LogIn,
   LogOut,
@@ -108,14 +107,6 @@ export default function Navbar() {
             label="Diabetes"
             active={isActive("/diabetes")}
             variant="green"
-          />
-
-          <NavButton
-            to="/heart"
-            icon={<HeartPulse size={17} />}
-            label="Heart"
-            active={isActive("/heart")}
-            variant="red"
           />
 
           <div style={styles.divider} />

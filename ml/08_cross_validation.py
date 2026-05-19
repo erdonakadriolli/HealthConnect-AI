@@ -206,15 +206,9 @@ def main():
 
     all_results = []
 
-    # Diabeti
     results_diabetes = process_dataset("diabetes", "Outcome", k_folds=5)
     all_results.extend(results_diabetes)
 
-    # Zemra
-    results_heart = process_dataset("heart", "target", k_folds=5)
-    all_results.extend(results_heart)
-
-    # Krahasimi
     compare_with_train_test(all_results)
 
     # Ruaj rezultatet

@@ -14,13 +14,10 @@ Hapat:
 
 Inputi:
   datasets/diabetes.csv
-  datasets/heart.csv
 
 Output:
   datasets/processed/diabetes_train.csv
   datasets/processed/diabetes_test.csv
-  datasets/processed/heart_train.csv
-  datasets/processed/heart_test.csv
   datasets/processed/scalers.pkl
 """
 
@@ -187,30 +184,6 @@ def process_diabetes():
 
 
 # =============================================================================
-# ZEMER
-# =============================================================================
-
-def process_heart():
-    print("\n" + "="*60)
-    print("  SEMUNDJET E ZEMRES (UCI Heart)")
-    print("="*60)
-    
-    df = pd.read_csv(RAW_DIR / "heart.csv")
-    print(f"  Te dhena origjinale: {df.shape[0]} rreshta x {df.shape[1]} kolona")
-    
-    # 1. Vlerat e munguara — UCI Heart nuk ka kete problem te koduar si 0
-    print(f"  Trajtimi i vlerave te munguara: nuk u gjeten")
-    
-    # 2. Outliers (vetem per kolonat numerike te vazhdueshme)
-    df = handle_outliers_iqr(df, target_col='target')
-    
-    # 3. Ndarje + skalim
-    scaler = split_and_scale(df, target_col='target', dataset_name='heart')
-    
-    return scaler
-
-
-# =============================================================================
 # MAIN
 # =============================================================================
 
@@ -221,20 +194,16 @@ def main():
     print(f"  Random state : {RANDOM_STATE}")
     print(f"  Test size    : {TEST_SIZE*100:.0f}%")
     print(f"  Output dir   : {PROCESSED_DIR}")
-    
-    # Procesoj te dyja datasetet
+
     scaler_diabetes = process_diabetes()
-    scaler_heart = process_heart()
-    
-    # Ruaj scaler-at (do na duhen kur te aplikojme modelet ne pacient te ri)
+
     scalers = {
         'diabetes': scaler_diabetes,
-        'heart': scaler_heart
     }
     scalers_path = PROCESSED_DIR / "scalers.pkl"
     with open(scalers_path, 'wb') as f:
         pickle.dump(scalers, f)
-    
+
     print("\n" + "="*60)
     print("  PERFUNDOI")
     print("="*60)

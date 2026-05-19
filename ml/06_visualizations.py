@@ -7,11 +7,10 @@ Qellimi: Krijon grafike profesionale per raportin dhe dashboard-in.
 
 Output (ne dosjen visualizations/):
   1. confusion_matrix_diabetes.png
-  2. confusion_matrix_heart.png
-  3. model_comparison.png
-  4. kmeans_clusters.png
-  5. feature_importance.png
-  6. metrics_radar.png
+  2. model_comparison.png
+  3. kmeans_clusters.png
+  4. feature_importance.png
+  5. metrics_radar.png
 """
 
 import pandas as pd
@@ -57,12 +56,8 @@ def plot_confusion_matrix(dataset_name: str, target_col: str, model_filename: st
     # Plot
     fig, ax = plt.subplots(figsize=(8, 6))
 
-    if dataset_name == "diabetes":
-        labels = ['Jo Diabetik', 'Diabetik']
-        title = f'Confusion Matrix - Diabeti ({model_label})'
-    else:
-        labels = ['Jo Semundje', 'Semundje Zemre']
-        title = f'Confusion Matrix - Zemra ({model_label})'
+    labels = ['Jo Diabetik', 'Diabetik']
+    title = f'Confusion Matrix - Diabeti ({model_label})'
 
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                 xticklabels=labels, yticklabels=labels,
@@ -90,34 +85,29 @@ def plot_model_comparison():
 
     df = pd.read_csv(MODELS_DIR / "results.csv")
 
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    fig, ax = plt.subplots(figsize=(10, 6))
     metrics = ['accuracy', 'precision', 'recall', 'f1_score']
     metric_labels = ['Accuracy', 'Precision', 'Recall', 'F1-Score']
 
-    for idx, (dataset, ax) in enumerate(zip(['diabetes', 'heart'], axes)):
-        subset = df[df['dataset'] == dataset].copy()
-        subset = subset.sort_values('f1_score', ascending=False)
+    subset = df[df['dataset'] == 'diabetes'].copy()
+    subset = subset.sort_values('f1_score', ascending=False)
 
-        x = np.arange(len(subset))
-        width = 0.2
+    x = np.arange(len(subset))
+    width = 0.2
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
 
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
+    for i, (metric, label, color) in enumerate(zip(metrics, metric_labels, colors)):
+        offset = (i - 1.5) * width
+        ax.bar(x + offset, subset[metric], width, label=label, color=color, alpha=0.85)
 
-        for i, (metric, label, color) in enumerate(zip(metrics, metric_labels, colors)):
-            offset = (i - 1.5) * width
-            bars = ax.bar(x + offset, subset[metric], width, label=label, color=color, alpha=0.85)
-
-        ax.set_xticks(x)
-        ax.set_xticklabels(subset['model'], rotation=20, ha='right', fontsize=10)
-        ax.set_ylabel('Score', fontweight='bold')
-        ax.set_title(f'Krahasimi i Modeleve - {dataset.upper()}', fontsize=13, fontweight='bold')
-        ax.legend(loc='lower right', framealpha=0.9)
-        ax.set_ylim(0, 1.05)
-        ax.grid(axis='y', alpha=0.3)
-
-        # Shenoj me te miren
-        best_idx = 0
-        ax.axvspan(best_idx - 0.4, best_idx + 0.4, alpha=0.15, color='green', label='_nolegend_')
+    ax.set_xticks(x)
+    ax.set_xticklabels(subset['model'], rotation=20, ha='right', fontsize=10)
+    ax.set_ylabel('Score', fontweight='bold')
+    ax.set_title('Krahasimi i Modeleve - DIABETI', fontsize=13, fontweight='bold')
+    ax.legend(loc='lower right', framealpha=0.9)
+    ax.set_ylim(0, 1.05)
+    ax.grid(axis='y', alpha=0.3)
+    ax.axvspan(-0.4, 0.4, alpha=0.15, color='green', label='_nolegend_')
 
     plt.suptitle('Krahasimi i Performances se Modeleve ML', fontsize=15, fontweight='bold', y=1.02)
     plt.tight_layout()
@@ -212,9 +202,8 @@ def plot_kmeans_clusters():
 def plot_feature_importance():
     """Tregon feature importance nga Random Forest."""
 
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    fig, ax = plt.subplots(figsize=(10, 6))
 
-    # Diabeti
     train_df = pd.read_csv(PROCESSED_DIR / "diabetes_train.csv")
     feature_names = [c for c in train_df.columns if c != 'Outcome']
 
@@ -223,34 +212,13 @@ def plot_feature_importance():
 
     importances = pd.Series(rf_diabetes.feature_importances_, index=feature_names).sort_values()
 
-    ax = axes[0]
     bars = ax.barh(importances.index, importances.values, color='#3498db', alpha=0.85)
     ax.set_xlabel('Rëndësia', fontweight='bold')
     ax.set_title('Feature Importance - Diabeti (Random Forest)', fontsize=13, fontweight='bold')
     ax.grid(axis='x', alpha=0.3)
 
-    # Shto vlerat
     for bar, val in zip(bars, importances.values):
         ax.text(val + 0.005, bar.get_y() + bar.get_height()/2,
-               f'{val:.3f}', va='center', fontsize=9)
-
-    # Zemra
-    train_df = pd.read_csv(PROCESSED_DIR / "heart_train.csv")
-    feature_names = [c for c in train_df.columns if c != 'target']
-
-    with open(MODELS_DIR / "heart_random_forest.pkl", "rb") as f:
-        rf_heart = pickle.load(f)
-
-    importances = pd.Series(rf_heart.feature_importances_, index=feature_names).sort_values()
-
-    ax = axes[1]
-    bars = ax.barh(importances.index, importances.values, color='#e74c3c', alpha=0.85)
-    ax.set_xlabel('Rëndësia', fontweight='bold')
-    ax.set_title('Feature Importance - Zemra (Random Forest)', fontsize=13, fontweight='bold')
-    ax.grid(axis='x', alpha=0.3)
-
-    for bar, val in zip(bars, importances.values):
-        ax.text(val + 0.003, bar.get_y() + bar.get_height()/2,
                f'{val:.3f}', va='center', fontsize=9)
 
     plt.suptitle('Cilat Features Jane Me te Rendesishme per Parashikim?',
@@ -272,7 +240,7 @@ def plot_metrics_radar():
 
     df = pd.read_csv(MODELS_DIR / "results.csv")
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 7), subplot_kw=dict(projection='polar'))
+    fig, ax = plt.subplots(figsize=(8, 7), subplot_kw=dict(projection='polar'))
 
     metrics = ['accuracy', 'precision', 'recall', 'f1_score']
     metric_labels = ['Accuracy', 'Precision', 'Recall', 'F1-Score']
@@ -280,25 +248,23 @@ def plot_metrics_radar():
     angles += angles[:1]
 
     colors = plt.cm.viridis(np.linspace(0, 0.9, 5))
+    subset = df[df['dataset'] == 'diabetes']
 
-    for idx, (dataset, ax) in enumerate(zip(['diabetes', 'heart'], axes)):
-        subset = df[df['dataset'] == dataset]
+    for i, (_, row) in enumerate(subset.iterrows()):
+        values = [row[m] for m in metrics]
+        values += values[:1]
 
-        for i, (_, row) in enumerate(subset.iterrows()):
-            values = [row[m] for m in metrics]
-            values += values[:1]
+        ax.plot(angles, values, 'o-', linewidth=2, label=row['model'], color=colors[i])
+        ax.fill(angles, values, alpha=0.1, color=colors[i])
 
-            ax.plot(angles, values, 'o-', linewidth=2, label=row['model'], color=colors[i])
-            ax.fill(angles, values, alpha=0.1, color=colors[i])
-
-        ax.set_xticks(angles[:-1])
-        ax.set_xticklabels(metric_labels, fontsize=11, fontweight='bold')
-        ax.set_ylim(0, 1)
-        ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
-        ax.set_yticklabels(['0.2', '0.4', '0.6', '0.8', '1.0'], fontsize=8)
-        ax.set_title(f'{dataset.upper()}', fontsize=13, fontweight='bold', pad=20)
-        ax.legend(loc='upper right', bbox_to_anchor=(1.4, 1.1), fontsize=8)
-        ax.grid(alpha=0.4)
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(metric_labels, fontsize=11, fontweight='bold')
+    ax.set_ylim(0, 1)
+    ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
+    ax.set_yticklabels(['0.2', '0.4', '0.6', '0.8', '1.0'], fontsize=8)
+    ax.set_title('DIABETI', fontsize=13, fontweight='bold', pad=20)
+    ax.legend(loc='upper right', bbox_to_anchor=(1.4, 1.1), fontsize=8)
+    ax.grid(alpha=0.4)
 
     plt.suptitle('Profili i Performances se Modeleve (Radar Chart)',
                 fontsize=15, fontweight='bold', y=1.05)
@@ -319,9 +285,8 @@ def main():
     print("  HEALTHCONNECT AI - VIZUALIZIMI I REZULTATEVE")
     print("="*60)
 
-    print("\n[1/5] Confusion Matrices...")
+    print("\n[1/5] Confusion Matrix...")
     plot_confusion_matrix("diabetes", "Outcome", "diabetes_random_forest.pkl", "Random Forest")
-    plot_confusion_matrix("heart", "target", "heart_knn.pkl", "kNN")
 
     print("\n[2/5] Krahasimi i modeleve...")
     plot_model_comparison()
@@ -336,7 +301,7 @@ def main():
     plot_metrics_radar()
 
     print(f"\n{'='*60}")
-    print(f"  PERFUNDOI - 6 grafike u ruajten ne: visualizations/")
+    print(f"  PERFUNDOI - 5 grafike u ruajten ne: visualizations/")
     print(f"{'='*60}")
 
 
