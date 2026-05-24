@@ -41,40 +41,136 @@ const NORMAL_RANGES = {
   Age: { min: 18, max: 80, unit: "vjet" },
 };
 
-const FIELD_LABELS_SQ = {
-  Pregnancies: "Shtatzanitë",
-  Glucose: "Glukoza",
-  BloodPressure: "Presioni",
-  SkinThickness: "Lëkura",
-  Insulin: "Insulina",
-  BMI: "BMI",
-  DiabetesPedigreeFunction: "DPF",
-  Age: "Mosha",
+const FIELD_LABELS = {
+  sq: {
+    Pregnancies: "Shtatzanitë",
+    Glucose: "Glukoza",
+    BloodPressure: "Tensioni",
+    SkinThickness: "Trashësia e Lëkurës",
+    Insulin: "Insulina",
+    BMI: "BMI",
+    DiabetesPedigreeFunction: "Rreziku Gjenetik",
+    Age: "Mosha",
+  },
+  en: {
+    Pregnancies: "Pregnancies",
+    Glucose: "Glucose",
+    BloodPressure: "Blood Pressure",
+    SkinThickness: "Skin Thickness",
+    Insulin: "Insulin",
+    BMI: "BMI",
+    DiabetesPedigreeFunction: "Genetic Risk",
+    Age: "Age",
+  }
 };
 
-function isOutOfRange(field, value) {
+const TRANSLATIONS = {
+  sq: {
+    title: "Vizualizimi i të Dhënave OCR",
+    patientValuesTitle: "Vlerat e Pacientit (nga OCR)",
+    patientValueLabel: "Vlera e Pacientit",
+    maxNormalLimitLabel: "Kufiri Max Normal",
+    normalRangeTooltip: "Normë",
+    probabilityTitle: "Probabiliteti",
+    riskLabel: "Rrezik",
+    safeLabel: "I sigurtë",
+    riskHigh: "RREZIK I LARTË",
+    riskLow: "RREZIK I ULËT",
+    riskHypo: "HIPOGLIKEMI CRITICAL",
+    hypoCenterLabel: "Kritike",
+    modelLabel: "Modeli",
+    kmeansLabel: "Grupi K-Means",
+    levelLabel: "Niveli",
+    radarTitle: "Profili i Pacientit (Radar — % e kufirit normal)",
+    radarPatientDataset: "Pacienti (%)",
+    radarNormalDataset: "Kufiri Normal (100%)",
+    tableTitle: "Tabela e Vlerave të Nxjerra nga Foto",
+    tableHeaders: ["Fusha", "Vlera", "Njësia", "Kufiri Normal", "Status"],
+    statusNormal: "Normale",
+    statusLow: "E Ulët",
+    statusHigh: "E Lartë",
+  },
+  en: {
+    title: "OCR Data Visualization",
+    patientValuesTitle: "Patient Values (from OCR)",
+    patientValueLabel: "Patient Value",
+    maxNormalLimitLabel: "Max Normal Limit",
+    normalRangeTooltip: "Normal",
+    probabilityTitle: "Probability",
+    riskLabel: "Risk",
+    safeLabel: "Safe",
+    riskHigh: "HIGH RISK",
+    riskLow: "LOW RISK",
+    riskHypo: "CRITICAL HYPOGLYCEMIA",
+    hypoCenterLabel: "Critical",
+    modelLabel: "Model",
+    kmeansLabel: "K-Means Group",
+    levelLabel: "Level",
+    radarTitle: "Patient Profile (Radar — % of normal limit)",
+    radarPatientDataset: "Patient (%)",
+    radarNormalDataset: "Normal Limit (100%)",
+    tableTitle: "Table of Values Extracted from Document",
+    tableHeaders: ["Field", "Value", "Unit", "Normal Limit", "Status"],
+    statusNormal: "Normal",
+    statusLow: "Low",
+    statusHigh: "High",
+  }
+};
+
+function getFieldStatus(field, value, lang) {
   const range = NORMAL_RANGES[field];
-  if (!range) return false;
-  return value < range.min || value > range.max;
+  const t = TRANSLATIONS[lang];
+  if (!range) return { status: "normal", label: t.statusNormal, color: "#16a34a", bg: "rgba(34, 197, 94, 0.12)", icon: "✅" };
+  
+  if (value < range.min) {
+    return {
+      status: "low",
+      label: t.statusLow,
+      color: "#d97706", // Amber-600
+      bg: "rgba(217, 119, 6, 0.12)",
+      icon: "⚠️",
+    };
+  } else if (value > range.max) {
+    return {
+      status: "high",
+      label: t.statusHigh,
+      color: "#dc2626", // Red-600
+      bg: "rgba(239, 68, 68, 0.12)",
+      icon: "⚠️",
+    };
+  }
+  
+  return {
+    status: "normal",
+    label: t.statusNormal,
+    color: "#16a34a", // Green-600
+    bg: "rgba(34, 197, 94, 0.12)",
+    icon: "✅",
+  };
 }
 
-export default function OCRDataCharts({ extractedData, predictionResult }) {
-  const fields = Object.keys(FIELD_LABELS_SQ);
+export default function OCRDataCharts({ extractedData, predictionResult, lang = "sq" }) {
+  const fields = Object.keys(FIELD_LABELS[lang]);
   const values = fields.map((f) => Number(extractedData?.[f]) || 0);
-  const labels = fields.map((f) => FIELD_LABELS_SQ[f]);
+  const labels = fields.map((f) => FIELD_LABELS[lang][f]);
+  const t = TRANSLATIONS[lang];
 
   /* ── 1. Bar Chart: Patient Values vs Normal Range ── */
-  const barColors = fields.map((f, i) =>
-    isOutOfRange(f, values[i])
-      ? "rgba(239, 68, 68, 0.78)"
-      : "rgba(15, 118, 110, 0.72)"
-  );
+  const barColors = fields.map((f, i) => {
+    const v = values[i];
+    const stat = getFieldStatus(f, v, lang);
+    if (stat.status === "low") return "rgba(217, 119, 6, 0.75)";
+    if (stat.status === "high") return "rgba(239, 68, 68, 0.78)";
+    return "rgba(15, 118, 110, 0.72)";
+  });
 
-  const barBorders = fields.map((f, i) =>
-    isOutOfRange(f, values[i])
-      ? "rgba(239, 68, 68, 1)"
-      : "rgba(15, 118, 110, 1)"
-  );
+  const barBorders = fields.map((f, i) => {
+    const v = values[i];
+    const stat = getFieldStatus(f, v, lang);
+    if (stat.status === "low") return "rgba(217, 119, 6, 1)";
+    if (stat.status === "high") return "rgba(239, 68, 68, 1)";
+    return "rgba(15, 118, 110, 1)";
+  });
 
   /* Normalize values for radar: value / max_normal to put everything on same scale */
   const normalizedValues = fields.map((f, i) => {
@@ -89,7 +185,11 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
   const probability = predictionResult
     ? Math.round(Number(predictionResult.probability) * 100)
     : 0;
-  const isHighRisk = probability >= 50;
+  
+  const glucoseVal = Number(extractedData?.Glucose) || 0;
+  const isHypoglycemia = glucoseVal > 0 && glucoseVal < 70;
+  
+  const isHighRisk = probability >= 50 || isHypoglycemia;
 
   return (
     <div
@@ -120,7 +220,7 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
             letterSpacing: "-0.5px",
           }}
         >
-          Vizualizimi i të Dhënave OCR
+          {t.title}
         </h2>
       </div>
 
@@ -154,14 +254,14 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
             }}
           >
             <span style={{ fontSize: "18px" }}>📋</span>
-            Vlerat e Pacientit (nga OCR)
+            {t.patientValuesTitle}
           </div>
           <Bar
             data={{
               labels,
               datasets: [
                 {
-                  label: "Vlera e Pacientit",
+                  label: t.patientValueLabel,
                   data: values,
                   backgroundColor: barColors,
                   borderColor: barBorders,
@@ -170,7 +270,7 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
                   borderSkipped: false,
                 },
                 {
-                  label: "Kufiri Max Normal",
+                  label: t.maxNormalLimitLabel,
                   data: fields.map((f) => NORMAL_RANGES[f].max),
                   backgroundColor: "rgba(59, 130, 246, 0.12)",
                   borderColor: "rgba(59, 130, 246, 0.5)",
@@ -201,7 +301,8 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
                       if (ctx.datasetIndex !== 0) return "";
                       const f = fields[ctx.dataIndex];
                       const r = NORMAL_RANGES[f];
-                      return `Normë: ${r.min} – ${r.max} ${r.unit}`;
+                      const unitText = r.unit ? ` ${r.unit}` : "";
+                      return `${t.normalRangeTooltip}: ${r.min} – ${r.max}${unitText}`;
                     },
                   },
                 },
@@ -247,15 +348,15 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
               }}
             >
               <span style={{ fontSize: "18px" }}>🎯</span>
-              Probabiliteti
+              {t.probabilityTitle}
             </div>
             <div style={{ position: "relative", maxWidth: "220px" }}>
               <Doughnut
                 data={{
-                  labels: ["Rrezik", "I sigurtë"],
+                  labels: [t.riskLabel, t.safeLabel],
                   datasets: [
                     {
-                      data: [probability, 100 - probability],
+                      data: isHypoglycemia ? [100, 0] : [probability, 100 - probability],
                       backgroundColor: isHighRisk
                         ? [
                             "rgba(239, 68, 68, 0.82)",
@@ -302,13 +403,13 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
               >
                 <div
                   style={{
-                    fontSize: "32px",
+                    fontSize: isHypoglycemia ? "24px" : "32px",
                     fontWeight: 900,
                     color: isHighRisk ? "#dc2626" : "#16a34a",
                     lineHeight: 1,
                   }}
                 >
-                  {probability}%
+                  {isHypoglycemia ? t.hypoCenterLabel : `${probability}%`}
                 </div>
                 <div
                   style={{
@@ -318,7 +419,7 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
                     marginTop: "4px",
                   }}
                 >
-                  {isHighRisk ? "RREZIK I LARTË" : "RREZIK I ULËT"}
+                  {isHypoglycemia ? t.riskHypo : isHighRisk ? t.riskHigh : t.riskLow}
                 </div>
               </div>
             </div>
@@ -334,16 +435,30 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
               }}
             >
               <DetailRow
-                label="Modeli"
+                label={t.modelLabel}
                 value={predictionResult.model_used || "Random Forest"}
               />
               <DetailRow
-                label="Grupi K-Means"
-                value={predictionResult.risk_group || "—"}
+                label={t.kmeansLabel}
+                value={
+                  isHypoglycemia
+                    ? lang === "en"
+                      ? "High Risk (Hypoglycemia)"
+                      : "Rrezik i Lartë (Hipoglikemi)"
+                    : predictionResult.risk_group || "—"
+                }
               />
               <DetailRow
-                label="Niveli"
-                value={predictionResult.risk_level || "—"}
+                label={t.levelLabel}
+                value={
+                  isHypoglycemia
+                    ? lang === "en"
+                      ? "High (Hypoglycemia)"
+                      : "Rrezik i Lartë (Hipoglikemi)"
+                    : lang === "en"
+                    ? (predictionResult.risk_level || "—").replace("High", "High Risk").replace("Low", "Low Risk").replace("Medium", "Medium Risk")
+                    : (predictionResult.risk_level || "—").replace("High", "Rrezik i Lartë").replace("Low", "Rrezik i Ulët").replace("Medium", "Rrezik Mesatar")
+                }
                 highlight={isHighRisk}
               />
             </div>
@@ -373,7 +488,7 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
           }}
         >
           <span style={{ fontSize: "18px" }}>🕸️</span>
-          Profili i Pacientit (Radar — % e kufirit normal)
+          {t.radarTitle}
         </div>
         <div style={{ maxWidth: "550px", margin: "0 auto" }}>
           <Radar
@@ -381,26 +496,27 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
               labels,
               datasets: [
                 {
-                  label: "Pacienti (%)",
+                  label: t.radarPatientDataset,
                   data: normalizedValues,
                   backgroundColor: "rgba(15, 118, 110, 0.15)",
                   borderColor: "rgba(15, 118, 110, 0.8)",
                   borderWidth: 2.5,
-                  pointBackgroundColor: fields.map((f, i) =>
-                    isOutOfRange(f, values[i])
-                      ? "rgba(239, 68, 68, 1)"
-                      : "rgba(15, 118, 110, 1)"
-                  ),
+                  pointBackgroundColor: fields.map((f, i) => {
+                    const v = values[i];
+                    const stat = getFieldStatus(f, v, lang);
+                    if (stat.status === "low") return "rgba(217, 119, 6, 1)";
+                    if (stat.status === "high") return "rgba(239, 68, 68, 1)";
+                    return "rgba(15, 118, 110, 1)";
+                  }),
                   pointRadius: 5,
                   pointHoverRadius: 8,
                 },
                 {
-                  label: "Kufiri Normal (100%)",
+                  label: t.radarNormalDataset,
                   data: normalBaseline,
                   backgroundColor: "rgba(59, 130, 246, 0.06)",
                   borderColor: "rgba(59, 130, 246, 0.4)",
                   borderWidth: 1.5,
-                  borderDash: [6, 3],
                   pointRadius: 0,
                 },
               ],
@@ -419,11 +535,12 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
                 tooltip: {
                   callbacks: {
                     label: (ctx) => {
-                      if (ctx.datasetIndex === 1) return "Kufiri Normal: 100%";
+                      if (ctx.datasetIndex === 1) return `${t.radarNormalDataset}: 100%`;
                       const f = fields[ctx.dataIndex];
                       const r = NORMAL_RANGES[f];
                       const v = values[ctx.dataIndex];
-                      return `${FIELD_LABELS_SQ[f]}: ${v} ${r.unit} (${Math.round(ctx.parsed.r)}% e kufirit)`;
+                      const unitText = r.unit ? ` ${r.unit}` : "";
+                      return `${FIELD_LABELS[lang][f]}: ${v}${unitText} (${Math.round(ctx.parsed.r)}% ${lang === "en" ? "of normal" : "e kufirit"})`;
                     },
                   },
                 },
@@ -469,7 +586,7 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
           }}
         >
           <span style={{ fontSize: "18px" }}>📝</span>
-          Tabela e Vlerave të Nxjerra nga Foto
+          {t.tableTitle}
         </div>
         <div style={{ overflowX: "auto" }}>
           <table
@@ -482,37 +599,39 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
           >
             <thead>
               <tr>
-                {["Fusha", "Vlera", "Njësia", "Kufiri Normal", "Status"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      style={{
-                        padding: "10px 14px",
-                        textAlign: "left",
-                        fontWeight: 800,
-                        color: "#475569",
-                        fontSize: "12px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+                {t.tableHeaders.map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "10px 14px",
+                      textAlign: "left",
+                      fontWeight: 800,
+                      color: "#475569",
+                      fontSize: "12px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {fields.map((f, i) => {
                 const range = NORMAL_RANGES[f];
-                const outOfRange = isOutOfRange(f, values[i]);
+                const v = values[i];
+                const stat = getFieldStatus(f, v, lang);
+                
+                let rowBg = "rgba(255, 255, 255, 0.7)";
+                if (stat.status === "low") rowBg = "rgba(217, 119, 6, 0.06)";
+                else if (stat.status === "high") rowBg = "rgba(239, 68, 68, 0.06)";
+
                 return (
                   <tr
                     key={f}
                     style={{
-                      background: outOfRange
-                        ? "rgba(239, 68, 68, 0.06)"
-                        : "rgba(255, 255, 255, 0.7)",
+                      background: rowBg,
                       borderRadius: "12px",
                     }}
                   >
@@ -524,16 +643,16 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
                         borderRadius: "12px 0 0 12px",
                       }}
                     >
-                      {FIELD_LABELS_SQ[f]}
+                      {FIELD_LABELS[lang][f]}
                     </td>
                     <td
                       style={{
                         padding: "10px 14px",
                         fontWeight: 800,
-                        color: outOfRange ? "#dc2626" : "#0f766e",
+                        color: stat.color,
                       }}
                     >
-                      {values[i]}
+                      {v}
                     </td>
                     <td
                       style={{
@@ -566,13 +685,11 @@ export default function OCRDataCharts({ extractedData, predictionResult }) {
                           borderRadius: "999px",
                           fontSize: "12px",
                           fontWeight: 700,
-                          background: outOfRange
-                            ? "rgba(239, 68, 68, 0.12)"
-                            : "rgba(34, 197, 94, 0.12)",
-                          color: outOfRange ? "#dc2626" : "#16a34a",
+                          background: stat.bg,
+                          color: stat.color,
                         }}
                       >
-                        {outOfRange ? "⚠️ Jashtë" : "✅ Normale"}
+                        {stat.icon} {stat.label}
                       </span>
                     </td>
                   </tr>

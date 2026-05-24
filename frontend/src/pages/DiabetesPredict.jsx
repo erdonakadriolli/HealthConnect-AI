@@ -38,6 +38,75 @@ const FIELD_KEYS = [
   "Age",
 ];
 
+const TRANSLATIONS = {
+  sq: {
+    badgeText: "Parashikimi i Diabetit me IA",
+    title: "Vlerësimi i Rrezikut të Diabetit",
+    subtitle: "Ky model i fuqizuar nga Inteligjenca Artificiale analizon treguesit kryesorë klinikë si nivelet e glukozës, BMI-së, insulinës dhe moshës për të vlerësuar gjasat e diabetit. Plotësoni të dhënat e sakta të pacientit për të marrë një vlerësim probabiliteti të rrezikut.",
+    howItWorksTitle: "Si funksionon:",
+    howItWorksText: "Ky model i mësimit të makinës vlerëson faktorët metabolikë, gjenetikë dhe fiziologjikë për të zbuluar modelet e lidhura zakonisht me rrezikun e diabetit. Rezultati nuk është një diagnozë mjekësore, por mund të ndihmojë në mbështetjen e skriningut të hershëm dhe vendimmarrjes.",
+    ocrTitle: "Lexo analizat prej fotos ose PDF (auto-fill me OCR)",
+    ocrDesc: "Ngarko foton ose dokumentin PDF të analizës laboratorike. LEADTOOLS OCR do të ekstraktojë vlerat në formën e diabetit më poshtë. Mund t'i redaktosh para se të bësh parashikim.",
+    ocrBtnSelect: "Zgjidh foto ose PDF",
+    ocrBtnReading: "Po lexohet dokumenti...",
+    fieldsFilled: "fusha u plotësuan",
+    errorNoFields: "Nuk u gjet asnjë vlerë në imazh. Sigurohu që analiza është e dukshme.",
+    errorFailed: "Leximi i imazhit dështoi. Sigurohu që backend-i po ekzekutohet dhe LEADTOOLS është konfiguruar.",
+    labelPregnancies: "Shtatzanitë (Numri i shtatzanive)",
+    labelGlucose: "Glukoza (Niveli i sheqerit në gjak)",
+    labelBloodPressure: "Tensioni i Gjakut (mm Hg)",
+    labelSkinThickness: "Trashësia e Lëkurës (mm)",
+    labelInsulin: "Niveli i Insulinës (mu U/ml)",
+    labelBMI: "BMI (Indeksi i masës trupore)",
+    labelPedigree: "Rreziku Gjenetik (Diabetes Pedigree Function)",
+    labelAge: "Mosha (Vitet)",
+    placeholderPregnancies: "P.sh. 2",
+    placeholderGlucose: "P.sh. 120",
+    placeholderBloodPressure: "P.sh. 70",
+    placeholderSkinThickness: "P.sh. 20",
+    placeholderInsulin: "P.sh. 85",
+    placeholderBMI: "P.sh. 28.5",
+    placeholderPedigree: "P.sh. 0.5",
+    placeholderAge: "P.sh. 35",
+    btnPredict: "Parashiko Rrezikun e Diabetit",
+    btnPredicting: "Duke parashikuar...",
+    errorPredictionFailed: "Parashikimi dështoi. Sigurohu që backend-i po ekzekutohet.",
+  },
+  en: {
+    badgeText: "AI Diabetes Prediction",
+    title: "Diabetes Risk Assessment",
+    subtitle: "This AI-powered model analyzes key clinical indicators such as glucose levels, BMI, insulin, and age to estimate the likelihood of diabetes. Provide accurate patient data to receive a probability-based risk assessment.",
+    howItWorksTitle: "How it works:",
+    howItWorksText: "This machine learning model evaluates metabolic, genetic, and physiological factors to detect patterns commonly associated with diabetes risk. The result is not a medical diagnosis, but it can help support early screening and decision-making.",
+    ocrTitle: "Read analysis from photo or PDF (auto-fill with OCR)",
+    ocrDesc: "Upload the lab analysis photo or PDF document. LEADTOOLS OCR will extract values into the diabetes form below. You can edit them before making a prediction.",
+    ocrBtnSelect: "Select photo or PDF",
+    ocrBtnReading: "Reading document...",
+    fieldsFilled: "fields filled",
+    errorNoFields: "No values found in the image. Make sure the lab analysis is visible.",
+    errorFailed: "Reading image failed. Make sure backend is running and LEADTOOLS is configured.",
+    labelPregnancies: "Pregnancies (Number of times pregnant)",
+    labelGlucose: "Glucose (Blood Sugar Level)",
+    labelBloodPressure: "Blood Pressure (mm Hg)",
+    labelSkinThickness: "Skin Thickness (mm)",
+    labelInsulin: "Insulin Level (mu U/ml)",
+    labelBMI: "BMI (Body Mass Index)",
+    labelPedigree: "Genetic Risk (Diabetes Pedigree Function)",
+    labelAge: "Age (Years)",
+    placeholderPregnancies: "Example: 2",
+    placeholderGlucose: "Example: 120",
+    placeholderBloodPressure: "Example: 70",
+    placeholderSkinThickness: "Example: 20",
+    placeholderInsulin: "Example: 85",
+    placeholderBMI: "Example: 28.5",
+    placeholderPedigree: "Example: 0.5",
+    placeholderAge: "Example: 35",
+    btnPredict: "Predict Diabetes Risk",
+    btnPredicting: "Predicting...",
+    errorPredictionFailed: "Prediction failed. Make sure backend is running.",
+  }
+};
+
 export default function DiabetesPredict() {
   const [form, setForm] = useState({
     Pregnancies: "",
@@ -50,6 +119,7 @@ export default function DiabetesPredict() {
     Age: "",
   });
 
+  const [lang, setLang] = useState("en"); // Language state: 'en' or 'sq' (defaults to English EN)
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -60,6 +130,8 @@ export default function DiabetesPredict() {
   const [extractedData, setExtractedData] = useState(null);
   const fileInputRef = useRef(null);
   const resultsRef = useRef(null);
+
+  const t = TRANSLATIONS[lang];
 
   function handleChange(e) {
     setForm({
@@ -96,16 +168,14 @@ export default function DiabetesPredict() {
       }
 
       if (filled.length === 0) {
-        setError(
-          "Nuk u gjet asnje vlere ne imazh. Sigurohu qe analiza eshte e dukshme."
-        );
+        setError(t.errorNoFields);
       }
-    } catch (err) {
-      const detail = err?.response?.data?.detail;
+    } catch (exc) {
+      const detail = exc.response?.data?.detail;
       setError(
         typeof detail === "string"
           ? detail
-          : "Leximi i imazhit deshtoi. Sigurohu qe backend-i po ekzekutohet dhe LEADTOOLS eshte konfiguruar."
+          : t.errorFailed
       );
     } finally {
       setUploading(false);
@@ -133,6 +203,16 @@ export default function DiabetesPredict() {
 
     try {
       const data = await predictDiabetes(payload);
+      
+      // Clinical safety override for Hypoglycemia (Glucose < 70)
+      if (payload.Glucose > 0 && payload.Glucose < 70) {
+        data.risk_level = "High (Hypoglycemia)";
+        data.prediction = 1;
+        data.probability = 1.0; // 100% risk to represent clinical emergency
+        data.risk_group = "Rrezik i Lartë (Hipoglikemi)";
+        data.message = `Rrezik i Lartë! Vlerat e glukozës janë shumë të ulëta (${payload.Glucose} mg/dL), gjë që tregon Hipoglikemi. Kjo paraqet rrezik të lartë shëndetësor! Rekomandohet kontroll i menjëhershëm mjekësor.`;
+      }
+      
       setResult(data);
       
       // Wait for React to render the inline result card, then scroll smoothly to it
@@ -140,7 +220,7 @@ export default function DiabetesPredict() {
         resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 100);
     } catch {
-      setError("Prediction failed. Make sure backend is running.");
+      setError(t.errorPredictionFailed);
     } finally {
       setLoading(false);
     }
@@ -149,13 +229,59 @@ export default function DiabetesPredict() {
   return (
     <Page variant="green">
       <Card variant="green" wide>
+        {/* Beautiful Glassmorphism Language Switcher */}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
+          <div
+            style={{
+              display: "inline-flex",
+              background: "rgba(15, 118, 110, 0.08)",
+              padding: "4px",
+              borderRadius: "12px",
+              border: "1px solid rgba(15, 118, 110, 0.12)",
+            }}
+          >
+            <button
+              onClick={() => setLang("sq")}
+              style={{
+                padding: "6px 14px",
+                borderRadius: "8px",
+                border: "none",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+                background: lang === "sq" ? "#0f766e" : "transparent",
+                color: lang === "sq" ? "#ffffff" : "#0f766e",
+                transition: "all 0.2s ease",
+              }}
+            >
+              SHQIP
+            </button>
+            <button
+              onClick={() => setLang("en")}
+              style={{
+                padding: "6px 14px",
+                borderRadius: "8px",
+                border: "none",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+                background: lang === "en" ? "#0f766e" : "transparent",
+                color: lang === "en" ? "#ffffff" : "#0f766e",
+                transition: "all 0.2s ease",
+              }}
+            >
+              ENGLISH
+            </button>
+          </div>
+        </div>
+
         <PageHeader
           variant="green"
           icon={<Droplets size={30} />}
           badgeIcon={<Activity size={15} />}
-          badgeText="AI Diabetes Prediction"
-          title="Diabetes Risk Assessment"
-          subtitle="This AI-powered model analyzes key clinical indicators such as glucose levels, BMI, insulin, and age to estimate the likelihood of diabetes. Provide accurate patient data to receive a probability-based risk assessment."
+          badgeText={t.badgeText}
+          title={t.title}
+          subtitle={t.subtitle}
         />
 
         <div
@@ -170,10 +296,7 @@ export default function DiabetesPredict() {
             lineHeight: "1.6",
           }}
         >
-          <strong>How it works:</strong> This machine learning model evaluates
-          metabolic, genetic, and physiological factors to detect patterns
-          commonly associated with diabetes risk. The result is not a medical
-          diagnosis, but it can help support early screening and decision-making.
+          <strong>{t.howItWorksTitle}</strong> {t.howItWorksText}
         </div>
 
         <div
@@ -199,13 +322,11 @@ export default function DiabetesPredict() {
             }}
           >
             <FileImage size={18} />
-            Lexo analizat prej fotos ose PDF (auto-fill me OCR)
+            {t.ocrTitle}
           </div>
 
           <div style={{ fontSize: "13px", color: "#475569", lineHeight: "1.5" }}>
-            Ngarko foton ose dokumentin PDF të analizës laboratorike. LEADTOOLS OCR
-            do të ekstraktojë vlerat në formën e diabetit më poshtë. Mund t&apos;i
-            redaktosh para se të bësh parashikim.
+            {t.ocrDesc}
           </div>
 
           <input
@@ -237,7 +358,7 @@ export default function DiabetesPredict() {
               }}
             >
               {uploading ? <Loader2 size={16} /> : <Upload size={16} />}
-              {uploading ? "Po lexohet dokumenti..." : "Zgjidh foto ose PDF"}
+              {uploading ? t.ocrBtnReading : t.ocrBtnSelect}
             </button>
 
             {uploadName && !uploading && (
@@ -245,7 +366,7 @@ export default function DiabetesPredict() {
                 {uploadName}
                 {extractedKeys.length > 0 && (
                   <strong style={{ marginLeft: "8px", color: "#15803d" }}>
-                    ({extractedKeys.length} fusha u plotesuan)
+                    ({extractedKeys.length} {t.fieldsFilled})
                   </strong>
                 )}
               </span>
@@ -257,95 +378,95 @@ export default function DiabetesPredict() {
           <InputField
             variant="green"
             icon={<UserRound size={18} />}
-            label="Pregnancies (Number of times pregnant)"
+            label={t.labelPregnancies}
             name="Pregnancies"
             value={form.Pregnancies}
             onChange={handleChange}
-            placeholder="Example: 2"
+            placeholder={t.placeholderPregnancies}
           />
 
           <InputField
             variant="green"
             icon={<Droplets size={18} />}
-            label="Glucose (Blood Sugar Level)"
+            label={t.labelGlucose}
             name="Glucose"
             value={form.Glucose}
             onChange={handleChange}
-            placeholder="Example: 120"
+            placeholder={t.placeholderGlucose}
           />
 
           <InputField
             variant="green"
             icon={<Gauge size={18} />}
-            label="Blood Pressure (mm Hg)"
+            label={t.labelBloodPressure}
             name="BloodPressure"
             value={form.BloodPressure}
             onChange={handleChange}
-            placeholder="Example: 70"
+            placeholder={t.placeholderBloodPressure}
           />
 
           <InputField
             variant="green"
             icon={<Activity size={18} />}
-            label="Skin Thickness (mm)"
+            label={t.labelSkinThickness}
             name="SkinThickness"
             value={form.SkinThickness}
             onChange={handleChange}
-            placeholder="Example: 20"
+            placeholder={t.placeholderSkinThickness}
           />
 
           <InputField
             variant="green"
             icon={<Syringe size={18} />}
-            label="Insulin Level (mu U/ml)"
+            label={t.labelInsulin}
             name="Insulin"
             value={form.Insulin}
             onChange={handleChange}
-            placeholder="Example: 85"
+            placeholder={t.placeholderInsulin}
           />
 
           <InputField
             variant="green"
             icon={<Scale size={18} />}
-            label="BMI (Body Mass Index)"
+            label={t.labelBMI}
             name="BMI"
             value={form.BMI}
             onChange={handleChange}
-            placeholder="Example: 28.5"
+            placeholder={t.placeholderBMI}
             step="0.1"
           />
 
           <InputField
             variant="green"
             icon={<Dna size={18} />}
-            label="Genetic Risk (Diabetes Pedigree Function)"
+            label={t.labelPedigree}
             name="DiabetesPedigreeFunction"
             value={form.DiabetesPedigreeFunction}
             onChange={handleChange}
-            placeholder="Example: 0.5"
+            placeholder={t.placeholderPedigree}
             step="0.001"
           />
 
           <InputField
             variant="green"
             icon={<UserRound size={18} />}
-            label="Age (Years)"
+            label={t.labelAge}
             name="Age"
             value={form.Age}
             onChange={handleChange}
-            placeholder="Example: 35"
+            placeholder={t.placeholderAge}
           />
 
           <Button type="submit" variant="green" fullWidth disabled={loading}>
             {loading ? (
               <>
                 <Loader2 size={18} />
-                Predicting...
+                {t.btnPredicting}
               </>
             ) : (
               <>
                 <Activity size={18} />
-                Predict Diabetes Risk
+                {t.btnPredict}
               </>
             )}
           </Button>
@@ -358,7 +479,13 @@ export default function DiabetesPredict() {
 
         {result && (
           <div style={{ marginTop: "38px", width: "100%" }}>
-            <PredictionModal inline type="diabetes" result={result} />
+            <PredictionModal
+              inline
+              type="diabetes"
+              result={result}
+              formValues={form}
+              lang={lang}
+            />
           </div>
         )}
 
@@ -367,6 +494,7 @@ export default function DiabetesPredict() {
             <OCRDataCharts
               extractedData={extractedData}
               predictionResult={result}
+              lang={lang}
             />
           </div>
         )}

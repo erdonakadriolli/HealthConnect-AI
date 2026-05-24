@@ -28,33 +28,49 @@ DEMO_VALUES = {
 }
 
 FIELD_LABELS = {
-    "Pregnancies": ["pregnancies", "pregnancy", "shtatzani", "shtatzanive", "shtatzanite"],
+    "Pregnancies": [
+        "pregnancies", "pregnancy",
+        "shtatzani", "shtatzanive", "shtatzanite", "shtatzenite", "shtatzeni", "shtatzene", "barra", "graviditeti", "graviditet",
+        "schwangerschaften", "schwangerschaft",
+        "gravidanze", "gravidanza"
+    ],
     "Glucose": [
-        "glucose",
-        "glukoze",
-        "glukoza",
-        "glicemi",
-        "glycemia",
-        "fasting blood sugar",
-        "fbs",
+        "glucose", "glukoze", "glukoza", "sheqeri ne gjak", "sheqer ne gjak", "sheqeri", "sheqer",
+        "glicemi", "glicemia", "glycemia", "fasting blood sugar", "fbs",
+        "glukose", "blutzucker", "glicemia a digiuno"
     ],
     "BloodPressure": [
-        "blood pressure",
-        "bp",
-        "presion",
-        "presioni",
-        "diastolic",
-        "presioni diastolik",
+        "blood pressure", "bp", "presion", "presioni", "presioni i gjakut", "tensioni i gjakut", "tensioni", "tension",
+        "diastolic", "presioni diastolik", "diastolike", "ta", "pa",
+        "blutdruck", "blutdruck diastolisch",
+        "pressione arteriosa", "pressione diastolica"
     ],
-    "SkinThickness": ["skin thickness", "triceps", "lekures", "lekura", "trashesia e lekures"],
-    "Insulin": ["insulin", "insulina", "insulin serum"],
-    "BMI": ["bmi", "body mass index", "masa trupore", "indeksi i mases trupore"],
+    "SkinThickness": [
+        "skin thickness", "triceps", "lekures", "lekura", "trashesia e lekures", "trashesia", "plika lekurore",
+        "hautdicke", "hautfaltendicke",
+        "spessore cutaneo", "plica cutanea"
+    ],
+    "Insulin": [
+        "insulin", "insulina", "insulin serum", "insuline", "insulinë",
+        "insulin",
+        "insulina"
+    ],
+    "BMI": [
+        "bmi", "body mass index", "masa trupore", "indeksi i mases trupore", "imt", "indeksi i mases",
+        "body-mass-index",
+        "indice di massa corporea", "imc"
+    ],
     "DiabetesPedigreeFunction": [
-        "diabetes pedigree function",
-        "pedigree",
-        "dpf",
+        "diabetes pedigree function", "pedigree", "dpf",
+        "historiku i diabetit", "trashegimia", "trashegimi",
+        "vererbung",
+        "familiarita"
     ],
-    "Age": ["age", "mosha", "vitet", "years"],
+    "Age": [
+        "age", "mosha", "vitet", "vjet", "years", "mosha (vitet)",
+        "alter",
+        "eta"
+    ],
 }
 
 

@@ -1,24 +1,59 @@
 import { useEffect } from "react";
 
-export default function PredictionModal({ result, onClose, type = "diabetes", inline = false }) {
+export default function PredictionModal({
+  result,
+  onClose,
+  type = "diabetes",
+  inline = false,
+  formValues = null,
+  lang = "sq",
+}) {
   const probability = Math.round(Number(result?.probability || 0) * 100);
-  const riskText = translateRisk(result?.risk_level);
+  
+  const glucoseVal = Number(formValues?.Glucose) || 0;
+  const isHypoglycemia = type === "diabetes" && glucoseVal > 0 && glucoseVal < 70;
 
-  const isHighRisk =
+  let riskText = translateRisk(result?.risk_level, lang);
+  let isHighRisk =
     riskText.toLowerCase().includes("high") ||
-    riskText.toLowerCase().includes("lartë");
+    riskText.toLowerCase().includes("lartë") ||
+    riskText.toLowerCase().includes("risk");
 
-  const predictionText = getPredictionText(type, result?.prediction);
-  const modelText = result?.model_used || "Unknown";
-  const groupText =
+  let predictionText = getPredictionText(type, result?.prediction, lang);
+  let modelText = result?.model_used || "Unknown";
+  
+  let groupText =
     result?.group_kmeans ||
     result?.kmeans_group ||
     result?.cluster ||
     result?.group ||
     riskText;
 
-  const messageText =
-    result?.message || getDefaultMessage(type, isHighRisk, probability);
+  if (groupText === result?.risk_level) {
+    groupText = riskText;
+  }
+
+  let messageText =
+    result?.message || getDefaultMessage(type, isHighRisk, probability, lang);
+
+  if (isHypoglycemia) {
+    isHighRisk = true;
+    if (lang === "en") {
+      riskText = "High Risk (Hypoglycemia)";
+      predictionText = "Hypoglycemic";
+      messageText = `High Risk! Glucose values are very low (${glucoseVal} mg/dL), indicating Hypoglycemia. This represents a high health risk! Immediate medical check-up is recommended.`;
+      groupText = "High Risk (Hypoglycemia)";
+    } else {
+      riskText = "Rrezik i Lartë (Hipoglikemi)";
+      predictionText = "Hipoglikemik";
+      messageText = `Rrezik i Lartë! Vlerat e glukozës janë shumë të ulëta (${glucoseVal} mg/dL), gjë që tregon Hipoglikemi. Kjo paraqet rrezik të lartë shëndetësor! Rekomandohet kontroll i menjëhershëm mjekësor.`;
+      groupText = "Rrezik i Lartë (Hipoglikemi)";
+    }
+  }
+
+  if (lang === "en" && !isHypoglycemia) {
+    messageText = getEnglishMessage(messageText, type, isHighRisk, probability);
+  }
 
   useEffect(() => {
     if (inline) return;
@@ -105,7 +140,7 @@ export default function PredictionModal({ result, onClose, type = "diabetes", in
             color: "#1f4b7a",
           }}
         >
-          Rezultati i AI-së
+          {lang === "en" ? "AI Prediction Results" : "Rezultati i AI-së"}
         </h2>
       </div>
 
@@ -145,7 +180,13 @@ export default function PredictionModal({ result, onClose, type = "diabetes", in
           marginBottom: "12px",
         }}
       >
-        Probabiliteti për {type === "diabetes" ? "diabet" : "sëmundje zemre"}:
+        {isHypoglycemia
+          ? lang === "en"
+            ? "Health Risk Status:"
+            : "Statusi i Rrezikut Shëndetësor:"
+          : lang === "en"
+          ? `Probability of ${type === "diabetes" ? "diabetes" : "heart disease"}:`
+          : `Probabiliteti për ${type === "diabetes" ? "diabet" : "sëmundje zemre"}:`}
       </div>
 
       <div
@@ -164,18 +205,23 @@ export default function PredictionModal({ result, onClose, type = "diabetes", in
             width: `${Math.max(10, Math.min(probability, 100))}%`,
             height: "100%",
             borderRadius: "999px",
-            background:
-              "linear-gradient(90deg, #7bd8a3 0%, #eacb73 58%, #ef9a86 100%)",
+            background: isHypoglycemia
+              ? "linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)"
+              : "linear-gradient(90deg, #7bd8a3 0%, #eacb73 58%, #ef9a86 100%)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             color: "white",
-            fontSize: "15px",
+            fontSize: "13px",
             fontWeight: "800",
             transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         >
-          {probability}%
+          {isHypoglycemia
+            ? lang === "en"
+              ? "Critical: 100% Risk (Hypoglycemia)"
+              : "Kritike: 100% Rrezik (Hipoglikemi)"
+            : `${probability}%`}
         </div>
       </div>
 
@@ -187,10 +233,10 @@ export default function PredictionModal({ result, onClose, type = "diabetes", in
           marginBottom: "22px",
         }}
       >
-        <InfoCard label="PARASHIKIMI" value={predictionText} />
-        <InfoCard label="MODELI I PËRDORUR" value={modelText} />
-        <InfoCard label="GRUPI K-MEANS" value={groupText} />
-        <InfoCard label="KONFIDENCA" value={`${probability}%`} />
+        <InfoCard label={lang === "en" ? "PREDICTION" : "PARASHIKIMI"} value={predictionText} />
+        <InfoCard label={lang === "en" ? "MODEL USED" : "MODELI I PËRDORUR"} value={modelText} />
+        <InfoCard label={lang === "en" ? "K-MEANS GROUP" : "GRUPI K-MEANS"} value={groupText} />
+        <InfoCard label={lang === "en" ? "CONFIDENCE" : "KONFIDENCA"} value={`${probability}%`} />
       </div>
 
       <div
@@ -212,7 +258,8 @@ export default function PredictionModal({ result, onClose, type = "diabetes", in
           type,
           predictionText,
           riskText,
-          probability
+          probability,
+          lang
         )}
       </div>
     </div>
@@ -289,48 +336,96 @@ function InfoCard({ label, value }) {
   );
 }
 
-function translateRisk(risk) {
-  if (!risk) return "E panjohur";
+function translateRisk(risk, lang) {
+  if (!risk) return lang === "en" ? "Unknown" : "E panjohur";
 
   const value = String(risk).toLowerCase();
 
-  if (value.includes("i larte") || value.includes("high")) return "Rrezik i Lartë";
-  if (value.includes("i ulet") || value.includes("low")) return "Rrezik i Ulët";
-  if (value.includes("mes") || value.includes("medium")) return "Rrezik Mesatar";
-
-  return risk;
+  if (lang === "en") {
+    if (value.includes("i larte") || value.includes("high")) return "High Risk";
+    if (value.includes("i ulet") || value.includes("low")) return "Low Risk";
+    if (value.includes("mes") || value.includes("medium")) return "Medium Risk";
+    return risk;
+  } else {
+    if (value.includes("i larte") || value.includes("high")) return "Rrezik i Lartë";
+    if (value.includes("i ulet") || value.includes("low")) return "Rrezik i Ulët";
+    if (value.includes("mes") || value.includes("medium")) return "Rrezik Mesatar";
+    return risk;
+  }
 }
 
-function getPredictionText(type, prediction) {
+function getPredictionText(type, prediction, lang) {
   const isPositive = Number(prediction) === 1;
 
   if (type === "diabetes") {
+    if (lang === "en") {
+      return isPositive ? "Diabetic" : "Non-Diabetic";
+    }
     return isPositive ? "Diabetik" : "Jo Diabetik";
   }
 
+  if (lang === "en") {
+    return isPositive ? "Positive" : "Negative";
+  }
   return isPositive ? "Pozitiv" : "Negativ";
 }
 
-function getDefaultMessage(type, isHighRisk, probability) {
+function getDefaultMessage(type, isHighRisk, probability, lang) {
   if (type === "diabetes") {
+    if (lang === "en") {
+      return isHighRisk
+        ? `Result: High Risk. The patient has a ${probability}% probability of diabetes. Immediate medical check-up is recommended.`
+        : `Result: Low Risk. The patient has a ${probability}% probability of diabetes.`;
+    }
     return isHighRisk
       ? `Rezultati: rrezik i lartë. Pacienti ka ${probability}% probabilitet për diabet. Rekomandohet ekzaminim urgjent.`
       : `Rezultati: rrezik i ulët. Pacienti ka ${probability}% probabilitet për diabet.`;
   }
 
+  if (lang === "en") {
+    return isHighRisk
+      ? `Result: High Risk. The patient has a ${probability}% probability of heart disease. Immediate cardiology consult is recommended.`
+      : `Result: Low Risk. The patient has a ${probability}% probability of heart disease.`;
+  }
   return isHighRisk
     ? `Rezultati: rrezik i lartë. Pacienti ka ${probability}% probabilitet për sëmundje zemre. Rekomandohet konsultë kardiologjike.`
     : `Rezultati: rrezik i ulët. Pacienti ka ${probability}% probabilitet për sëmundje zemre.`;
 }
 
-function cleanBackendMessage(message, type, predictionText, riskText, probability) {
+function getEnglishMessage(message, type, isHighRisk, probability) {
+  if (message.startsWith("Rrezik i Lartë!")) {
+    return `High Risk! Glucose values are very low, indicating Hypoglycemia. This represents a high health risk! Immediate medical check-up is recommended.`;
+  }
+  
+  if (message.includes("rrezik i ulet") || message.includes("low")) {
+    return `Result: Low Risk. The patient has a ${probability}% probability of diabetes. Routine monitoring is recommended.`;
+  }
+  
+  if (message.includes("rrezik i larte") || message.includes("high")) {
+    return `Result: High Risk. The patient has a ${probability}% probability of diabetes. Immediate medical check-up is recommended.`;
+  }
+
+  return getDefaultMessage(type, isHighRisk, probability, "en");
+}
+
+function cleanBackendMessage(message, type, predictionText, riskText, probability, lang) {
   if (!message) {
     return getDefaultMessage(
       type,
       riskText.toLowerCase().includes("lartë") ||
-      riskText.toLowerCase().includes("high"),
-      probability
+      riskText.toLowerCase().includes("high") ||
+      riskText.toLowerCase().includes("risk"),
+      probability,
+      lang
     );
+  }
+
+  if (message.startsWith("Rrezik i Lartë!") || message.startsWith("High Risk!")) {
+    return message;
+  }
+
+  if (lang === "en") {
+    return message;
   }
 
   if (type === "diabetes") {

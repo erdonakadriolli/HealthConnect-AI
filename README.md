@@ -1,6 +1,8 @@
-# 🏥 HealthConnect AI
+# 🏥 HealthConnect AI — Personal Health Assistant
 
-Një platformë për diagnostikim prediktiv të diabetit përmes Inteligjencës Artificiale, me lexim automatik të analizave laboratorike nga fotot.
+Një platformë e fuqizuar nga Inteligjenca Artificiale për monitorimin, analizimin dhe parashikimin e shëndetit metabolik (si rreziku i diabetit), e krijuar posaçërisht për individë dhe pacientë. 
+
+Ky sistem është **100% i përqendruar te pacienti (personal-health-centric)**. Çdo përdorues normal mund të mbikëqyrë në mënyrë të pavarur dhe të sigurt shëndetin e tij.
 
 > **Projekt akademik** — Laboratorike 2 (Programim) & Machine Learning Models (MM)  
 > Universiteti për Biznes dhe Teknologji — UBT  
@@ -13,17 +15,20 @@ Një platformë për diagnostikim prediktiv të diabetit përmes Inteligjencës 
 | Anëtari | Roli | Përgjegjësia |
 |---------|------|--------------|
 | **Erdona Kadriolli** | Data & ML Engineer | Dataset-et, Preprocessing, Modelet ML, OCR me LEADTOOLS, API Docs |
-| **Fatlum Syla** | Backend Developer | FastAPI, 24 Tabelat, JWT Auth, WebSockets |
-| **Yll Bytyqi** | Frontend Developer | React + Vite, Dashboard, Real-Time Chat |
+| **Fatlum Syla** | Backend Developer | FastAPI, Databaza Personale, JWT Auth, WebSockets |
+| **Yll Bytyqi** | Frontend Developer | React + Vite, Dashboard, Real-Time Analytics |
 
 ---
 
-## 🧠 Çfarë bën ky sistem?
+## 🧠 Veçoritë Kryesore të Sistemit
 
-HealthConnect AI bashkon tri fusha:
+HealthConnect AI ofron një mjedis të plotë dhe të thjeshtë për monitorim shëndetësor vetjak:
 
- **Diagnostikim me AI** — Modeli ML (Random Forest) parashikon rrezikun e diabetit bazuar në 8 tregues klinikë; K-Means grupon pacientët në 3 kategori rreziku.
- **OCR e analizave** — Mjeku ngarkon foton e analizave laboratorike dhe LEADTOOLS OCR ekstrakton tekstin; sistemi pastaj i kthen vlerat në JSON të strukturuar për formën e parashikimit.
+*   🤖 **Parashikim me Inteligjencë Artificiale**: Model i trajnuar ML (Random Forest) që vlerëson menjëherë gjasat e diabetit bazuar në 8 tregues kryesorë metabolikë, si dhe K-Means për grupimin në kategori klinike rreziku.
+*   📄 **OCR i Analizave (Foto & PDF)**: Ngarko direkt foton apo dokumentin PDF të analizës laboratorike lokalisht. Sistemi përdor **LEADTOOLS OCR SDK** për të lexuar dhe plotësuar automatikisht të 8 fushat e nevojshme klinike.
+*   🌐 **Ndërfaqe plotësisht Dygjuhëshe (SHQIP / ENGLISH)**: Me një klikim të vetëm në krye të dritares kryesore, i gjithë aplikacioni (titujt, shpjegimet, fushat, butonat, grafikët dhe të gjitha rezultatet) kthehet në gjuhën e zgjedhur.
+*   🚨 **Sistem i Sigurisë Klinike (Emergjenca si Hipoglikemia)**: Nëse një vlerë është e ulët (si p.sh. Glukoza < 70 mg/dL që tregon Hipoglikemi), sistemi automatikisht ndez alarmin e rrezikut të lartë shëndetësor me ngjyrë të kuqe dhe jep rekomandimin e duhur për kontroll të menjëhershëm, duke parandaluar raportimet e gabuara të modelit 0%.
+*   📊 **Vizualizim Interaktiv me Grafikë**: Grafikë interaktivë shtyllë (Bar Chart), profile rreziku (Radar Chart) dhe grafik rrethor i probabilitetit (Donut) të cilët ngjyrosen dinamikisht (e gjelbër = normale, portokalli = vlerë e ulët, e kuqe = vlerë e lartë/rrezik).
 
 ---
 
@@ -32,13 +37,11 @@ HealthConnect AI bashkon tri fusha:
 | Shtresa | Teknologjia |
 |---------|-------------|
 | **Backend** | Python — FastAPI |
-| **Frontend** | React + Vite |
-| **Databaza SQL** | PostgreSQL |
-| **Databaza NoSQL** | MongoDB / Redis |
-| **ML** | scikit-learn, pandas, numpy |
-| **OCR** | LEADTOOLS OCR SDK |
-| **Real-Time** | WebSockets |
-| **Auth** | JWT (Access + Refresh Tokens) |
+| **Frontend** | React + Vite (Chart.js, react-chartjs-2, Lucide Icons) |
+| **Databaza SQL** | PostgreSQL / SQLAlchemy |
+| **ML Models** | scikit-learn, pandas, numpy, joblib |
+| **OCR Service** | LEADTOOLS OCR SDK (me mbështetje për formatele PDF, JPEG, PNG, TIFF) |
+| **Siguria** | JWT Authentication (Access & Refresh Tokens) |
 
 ---
 
@@ -47,60 +50,38 @@ HealthConnect AI bashkon tri fusha:
 ```
 HealthConnect-AI/
 │
-├── backend/                    # Fatlumi — FastAPI
+├── backend/                    # Fatlumi — FastAPI & Databases
 │   ├── app/
-│   │   ├── Controllers/        # auth_controller, ml_controller, websocket_controller
+│   │   ├── Controllers/        # auth_controller, ml_controller
 │   │   ├── Services/           # auth_service, ml_service, ocr_service
 │   │   ├── Repositories/       # auth_repository
-│   │   ├── models.py           # SQLAlchemy (24 tabela)
-│   │   ├── schemas.py          # Pydantic schemas
-│   │   ├── security.py         # JWT + password hashing
-│   │   ├── database.py         # SQLAlchemy engine
-│   │   └── deps.py             # Dependencies (RBAC, current_user)
-│   ├── main.py                 # Entry point
+│   │   ├── models.py           # Bazat e të dhënave për monitorim personal
+│   │   ├── schemas.py          # Pydantic validation schemas
+│   │   ├── security.py         # JWT Token secure operations
+│   │   ├── database.py         # Database engine setup
+│   │   └── deps.py             # User access dependencies
+│   ├── main.py                 # FastAPI Entry point
 │   └── requirements.txt
 │
-├── frontend/                   # Ylli — React + Vite
+├── frontend/                   # Ylli — React + Vite (Dashboard)
 │   ├── src/
-│   │   ├── pages/              # Login, Register, Dashboard, DiabetesPredict
-│   │   ├── components/         # Navbar, ProtectedRoute, ui/*
-│   │   ├── api/                # axios, authApi, predictionApi
-│   │   └── utils/              # token storage
+│   │   ├── pages/              # Login, Register, DiabetesPredict (Faqja kryesore e parashikimit)
+│   │   ├── components/         # Navbar, ProtectedRoute, ui/* (OCRDataCharts, PredictionModal)
+│   │   ├── api/                # axios instanca, authApi, predictionApi
+│   │   └── utils/              # Token storage
 │   └── package.json
 │
-├── ml/                         # Erdona — Machine Learning
-│   ├── 00_generate_datasets.py # Gjenerimi i dataset-it
-│   ├── 01_inspect_datasets.py  # Inspektimi i dataset-it
-│   ├── 02_preprocessing.py     # Pastrimi + skalimi + ndarja
-│   ├── 03_train_models.py      # Trajnimi i 5 modeleve
-│   ├── 04_kmeans_clustering.py # K-Means clustering
-│   ├── 05_predict.py           # Funksioni predict për backend
-│   ├── 06_visualizations.py    # Confusion matrix, feature importance, etj.
-│   ├── 07_hyperparameter_tuning.py
-│   └── 08_cross_validation.py
+├── ml/                         # Erdona — Machine Learning Core
+│   ├── 00_generate_datasets.py # Përgatitja e të dhënave fillestare
+│   ├── 02_preprocessing.py     # Pastrimi + skalimi i të dhënave
+│   ├── 03_train_models.py      # Trajnimi i 5 modeleve ML (RF, kNN, MLP, etj.)
+│   ├── 04_kmeans_clustering.py # K-Means për ndarjen e grupeve të rrezikut
+│   ├── 05_predict.py           # Integrimi i predikimit për backend
+│   └── 06_visualizations.py    # Gjenerimi i matricave të konfuzionit dhe grafikëve ML
 │
-├── datasets/                   # Të dhënat
-│   ├── diabetes.csv            # Pima Indians Diabetes (768 rreshta)
-│   └── processed/              # Të dhënat e pastruara
-│       ├── diabetes_train.csv
-│       ├── diabetes_test.csv
-│       └── scalers.pkl
-│
+├── datasets/                   # Pima Indians Diabetes CSV Datasets
 ├── models/                     # Modelet e trajnuara (.pkl)
-│   ├── diabetes_random_forest.pkl    ⭐ (modeli kryesor)
-│   ├── diabetes_knn.pkl
-│   ├── diabetes_logistic_regression.pkl
-│   ├── diabetes_mlp_arkitektura_1.pkl
-│   ├── diabetes_mlp_arkitektura_2.pkl
-│   ├── diabetes_kmeans.pkl
-│   ├── tuned_diabetes_*.pkl          # Modelet pas hyperparameter tuning
-│   ├── results.csv
-│   ├── tuning_results.csv
-│   ├── cross_validation_results.csv
-│   └── kmeans_results.csv
-│
-├── visualizations/             # Grafiket (.png)
-├── ERD.png                     # Diagrami i bazës së të dhënave
+├── visualizations/             # Grafikët e analizave të modeleve ML
 └── README.md
 ```
 
@@ -108,63 +89,39 @@ HealthConnect-AI/
 
 ## ⚙️ Instalimi dhe Ekzekutimi
 
-### Kërkesat paraprake
-
-- Python 3.10+
-- Node.js 18+
-- PostgreSQL 14+
-- Git
-- **LEADTOOLS SDK + licencë** (për leximin e analizave nga fotot)
+### Kërkesat Paraprake
+*   Python 3.10+
+*   Node.js 18+
+*   PostgreSQL
+*   **LEADTOOLS SDK v23** (e instaluar në `C:\LEADTOOLS23` me licencë aktive)
 
 ---
 
-### 1. Klono Repository-n
-
-```bash
-git clone https://github.com/username/HealthConnect-AI.git
-cd HealthConnect-AI
-```
-
----
-
-### 2. Backend (Fatlumi)
+### 1. Backend Setup
 
 ```bash
 cd backend
 
-# Krijo virtual environment
-python -m venv venv
-
-# Aktivo (Windows)
-venv\Scripts\activate
-
-# Aktivo (Mac/Linux)
-source venv/bin/activate
+# Krijo dhe aktivizo venv
+python -m venv .venv
+.venv\Scripts\activate
 
 # Instalo dependencies
 pip install -r requirements.txt
 
-# Konfiguro .env
-cp .env.example .env
-# Edito .env me kredencialet e databazës dhe konfigurimin e LEADTOOLS:
-#   DATABASE_URL=postgresql://...
-#   JWT_SECRET=...
+# Konfiguro skedarin .env duke vendosur shtigjet e LEADTOOLS:
 #   LEADTOOLS_INSTALL_DIR=C:\LEADTOOLS23
 #   LEADTOOLS_LICENSE_DIR=C:\LEADTOOLS23\Support\Common\License
 #   LEADTOOLS_OCR_RUNTIME_DIR=C:\LEADTOOLS23\Bin\Common\OcrLEADRuntime
 
-# Starto serverin
-uvicorn main:app --reload
+# Starto serverin e zhvillimit
+python -m uvicorn main:app --reload --port 8000
 ```
-
-Backend do të jetë aktiv në: `http://localhost:8000`  
-Swagger UI: `http://localhost:8000/docs`
-
-> ⚠️ Pa LEADTOOLS SDK dhe licencë valide, endpoint-i `/api/predict/diabetes/extract` kthen 500. Parashikimi i thjeshtë (`/api/predict/diabetes`) funksionon pa OCR.
+Swagger API Docs do të jetë i disponueshëm në: `http://localhost:8000/docs`
 
 ---
 
-### 3. Frontend (Ylli)
+### 2. Frontend Setup
 
 ```bash
 cd frontend
@@ -172,185 +129,39 @@ cd frontend
 # Instalo dependencies
 npm install
 
-# Starto serverin e zhvillimit
-npm run dev
+# Ndez serverin e Vite (duke anashkaluar skriptet e bllokuara në PowerShell)
+cmd /c "npm run dev"
 ```
-
-Frontend do të jetë aktiv në: `http://localhost:5173`
+Aplikacioni do të jetë aktiv në: `http://localhost:5174` (ose `http://localhost:5173`)
 
 ---
 
-### 4. Machine Learning (Erdona)
+## 🤖 Modelet ML — Rezultatet e Trajnimit
 
-```bash
-cd ml
+### Klasifikimi i Diabetit (Random Forest kryesori)
+*   **Random Forest Acc**: **85.71%** (F1-score: 0.79)
+*   kNN Accuracy: 84.42%
+*   MLP Neural Network Acc: 83.12%
 
-# Instalo dependencies
-pip install pandas numpy scikit-learn matplotlib seaborn
-
-# Hapi 0: Gjenero dataset-in (opsionale, vetëm nëse mungon diabetes.csv)
-python 00_generate_datasets.py
-
-# Hapi 1: Inspekto dataset-in
-python 01_inspect_datasets.py
-
-# Hapi 2: Preprocessing
-python 02_preprocessing.py
-
-# Hapi 3: Trajno modelet (kNN, RF, LogReg, MLP x2)
-python 03_train_models.py
-
-# Hapi 4: K-Means Clustering
-python 04_kmeans_clustering.py
-
-# Hapi 5: Testo funksionin predict
-python 05_predict.py
-
-# Hapi 6: Gjenero grafiket
-python 06_visualizations.py
-
-# Hapi 7: Hyperparameter tuning (opsionale, merr 5-15 min)
-python 07_hyperparameter_tuning.py
-
-# Hapi 8: Cross-validation (opsionale)
-python 08_cross_validation.py
-```
+### K-Means Clustering (Grupimi i Rrezikut të Përdoruesit)
+Ndarja e kategorive klinike të rrezikut në bazë të distancave të treguesve klinikë:
+1.  **Rrezik i Ulët**: 41.9% e pacientëve (Vetëm 8.1% gjasa pozitive)
+2.  **Rrezik Mesatar**: 31.1% e pacientëve
+3.  **Rrezik i Lartë**: 27.0% e pacientëve
 
 ---
 
-## 🤖 Modelet ML — Rezultatet
-
-### Diabeti (Pima Indians Diabetes Database)
-
-| Modeli | Accuracy | F1-Score |
-|--------|----------|----------|
-| **Random Forest** ⭐ | 85.71% | 0.7963 |
-| kNN | 84.42% | 0.7692 |
-| MLP Arkitektura 2 | 83.12% | 0.7679 |
-| Logistic Regression | 75.32% | 0.6481 |
-| MLP Arkitektura 1 | 74.68% | 0.5979 |
-
-### K-Means Clustering (3 Grupe Rreziku)
-
-| Grupi | Pacientë | % Diabetik |
-|-------|----------|------------|
-| Rrezik i Ulët | 322 (41.9%) | 8.1% |
-| Rrezik Mesatar | 239 (31.1%) | 53.1% |
-| Rrezik i Lartë | 207 (27.0%) | 55.6% |
-
----
-
-## 👁️ OCR e Analizave (LEADTOOLS)
-
-Pacienti ngarkon foton e analizave laboratorike te faqja **Diabetes Prediction**, dhe sistemi:
-
-1. E lexon imazhin lokalisht me LEADTOOLS OCR SDK.
-2. Shërbimi `OCRService` pars-on tekstin dhe kthen JSON me 8 fushat e nevojshme për parashikim:
-   `Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age`.
-3. Formulari plotësohet automatikisht; pacienti mund t'i redaktojë vlerat para se të bëjë parashikimin.
-
-**Karakteristikat:**
-- Formate të pranuara: JPEG, PNG, WEBP, GIF, TIFF
-- Madhësia maksimale: 10 MB
-- Fusha që nuk gjenden në foto kthehen si `null` (nuk shpiken vlera)
-- LEADTOOLS bën OCR të tekstit; parser-i kërkon emërtimet klinike (p.sh. "Glukoza në gjak" → fusha `Glucose`)
-
----
-
-## 🔌 API Endpoints (kryesorët)
-
-### Autentifikimi
-```
-POST   /api/auth/register        # Regjistrim
-POST   /api/auth/login           # Login — kthen JWT
-POST   /api/auth/refresh         # Rifresko token-in
-POST   /api/auth/logout          # Logout
-```
-
-### Pacientët
-```
-GET    /api/patients             # Lista e pacientëve
-GET    /api/patients/{id}        # Detajet e pacientit
-POST   /api/patients             # Shto pacient
-PUT    /api/patients/{id}        # Edito pacient
-DELETE /api/patients/{id}        # Fshi pacient
-```
-
-### Mjekët & Takimet
-```
-GET    /api/doctors              # Lista e mjekëve
-GET    /api/appointments         # Takimet
-POST   /api/appointments         # Rezervo takim
-PUT    /api/appointments/{id}    # Ndrysho takim
-```
-
-### Machine Learning ⭐
-```
-POST   /api/predict/diabetes          # Parashiko diabetin (JSON me 8 fusha)
-POST   /api/predict/diabetes/extract  # OCR e analizave (multipart, foto) — LEADTOOLS
-GET    /api/predict/history/{id}      # Historiku i parashikimeve
-```
-
-### Raportet
-```
-GET    /api/reports/patient/{id}/pdf    # Eksporto PDF
-GET    /api/reports/patient/{id}/excel  # Eksporto Excel
-```
-
-**Dokumentim i plotë:** `http://localhost:8000/docs` (Swagger UI)
-
----
-
-## 🔒 Siguria
-
-- **JWT Authentication** — Access Token (15 min) + Refresh Token (7 ditë)
-- **RBAC** — Role-Based Access Control (Admin, Mjek, Pacient)
-- **SQL Injection Protection** — ORM queries + input validation
-- **Input Validation** — Pydantic models për të gjitha request-et
-- **Licenca e fshehur** — konfigurimi i LEADTOOLS lexohet vetëm nga environment, asnjëherë nuk del te klienti
-- **HTTPS** — i detyrueshëm në production
-
----
-
-## 📡 Real-Time (WebSockets)
-
-```
-WS  /ws/notifications/{user_id}   # Njoftime live
-WS  /ws/chat/{room_id}            # Chat mjek-pacient
-```
-
----
-
-## 📊 Databaza
-
-**24 Tabela** të ndara në dy grupe:
-
-**10 Tabelat e Detyrueshme (Auth & System):**
-`Users, Roles, UserRoles, Permissions, RolePermissions, RefreshTokens, AuditLogs, Notifications, Settings, Files`
-
-**14 Tabelat e Domenit (Mjekësor):**
-`Patients, Doctors, Appointments, Specializations, MedicalRecords, LabTests, Prescriptions, Medications, Symptoms, SymptomReports, Clinics, Vaccinations, EmergencyContacts, InsurancePolicies`
-
-ERD Diagram: `ERD.png` në rrënjën e repository-t.
-
----
-
-## 📋 Menaxhimi i Projektit
-
-- **GitHub Projects** — To Do / In Progress / Done
-- **Commits** — çdo anëtar bën commit individualisht
-- **Branch strategy** — `main` (production), `dev` (zhvillim), `feature/*` (features)
+## 🔒 Siguria Klinike dhe Personale
+*   **Personal Privacy**: Pa ndarje të dhënash me spitalet. Çdo të dhënë e analizuar ruhet lokalisht dhe personalisht.
+*   **JWT Secure Auth**: Qasje e mbrojtur me Access Tokens dhe Refresh Tokens.
+*   **Clinical Overrides**: Mbrojtje e plotë shëndetësore nga vendimet e pastra të modelit ML (p.sh. hipoglikemia kapet si rrezik kritik pavarësisht predikimit 0% të diabetit).
 
 ---
 
 ## 📚 Dataset-i
-
-| Dataset | Burimi | Rreshta | Features |
-|---------|--------|---------|----------|
-| Pima Indians Diabetes | NIDDK, Smith et al. 1988 | 768 | 8 |
+Sistemi bazohet në databazën e famshme **Pima Indians Diabetes Database** (NIDDK), e cila përmban të dhëna klinike reale të performuara për pacientët femra mbi 21 vjeç me prejardhje nga Pima.
 
 ---
 
 ## 📄 Licenca
-
 Projekt akademik — UBT 2025-2026. Të gjitha të drejtat e rezervuara.
