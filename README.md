@@ -12,7 +12,7 @@ Një platformë për diagnostikim prediktiv të diabetit përmes Inteligjencës 
 
 | Anëtari | Roli | Përgjegjësia |
 |---------|------|--------------|
-| **Erdona Kadriolli** | Data & ML Engineer | Dataset-et, Preprocessing, Modelet ML, OCR me Claude vision, API Docs |
+| **Erdona Kadriolli** | Data & ML Engineer | Dataset-et, Preprocessing, Modelet ML, OCR me LEADTOOLS, API Docs |
 | **Fatlum Syla** | Backend Developer | FastAPI, 24 Tabelat, JWT Auth, WebSockets |
 | **Yll Bytyqi** | Frontend Developer | React + Vite, Dashboard, Real-Time Chat |
 
@@ -23,7 +23,7 @@ Një platformë për diagnostikim prediktiv të diabetit përmes Inteligjencës 
 HealthConnect AI bashkon tri fusha:
 
  **Diagnostikim me AI** — Modeli ML (Random Forest) parashikon rrezikun e diabetit bazuar në 8 tregues klinikë; K-Means grupon pacientët në 3 kategori rreziku.
- **OCR e analizave** — Mjeku ngarkon foton e analizave laboratorike dhe Claude Sonnet 4.6 (vision) ekstrakton automatikisht vlerat në formë të strukturuar JSON, që pastaj plotësojnë formën e parashikimit.
+ **OCR e analizave** — Mjeku ngarkon foton e analizave laboratorike dhe LEADTOOLS OCR ekstrakton tekstin; sistemi pastaj i kthen vlerat në JSON të strukturuar për formën e parashikimit.
 
 ---
 
@@ -36,7 +36,7 @@ HealthConnect AI bashkon tri fusha:
 | **Databaza SQL** | PostgreSQL |
 | **Databaza NoSQL** | MongoDB / Redis |
 | **ML** | scikit-learn, pandas, numpy |
-| **AI Vision (OCR)** | Anthropic Claude Sonnet 4.6 |
+| **OCR** | LEADTOOLS OCR SDK |
 | **Real-Time** | WebSockets |
 | **Auth** | JWT (Access + Refresh Tokens) |
 
@@ -114,7 +114,7 @@ HealthConnect-AI/
 - Node.js 18+
 - PostgreSQL 14+
 - Git
-- **API key i Anthropic** (për leximin e analizave nga fotot) — merre falas në https://console.anthropic.com
+- **LEADTOOLS SDK + licencë** (për leximin e analizave nga fotot)
 
 ---
 
@@ -146,10 +146,12 @@ pip install -r requirements.txt
 
 # Konfiguro .env
 cp .env.example .env
-# Edito .env me kredencialet e databazës dhe API key-in:
+# Edito .env me kredencialet e databazës dhe konfigurimin e LEADTOOLS:
 #   DATABASE_URL=postgresql://...
 #   JWT_SECRET=...
-#   ANTHROPIC_API_KEY=sk-ant-...
+#   LEADTOOLS_INSTALL_DIR=C:\LEADTOOLS23
+#   LEADTOOLS_LICENSE_DIR=C:\LEADTOOLS23\Support\Common\License
+#   LEADTOOLS_OCR_RUNTIME_DIR=C:\LEADTOOLS23\Bin\Common\OcrLEADRuntime
 
 # Starto serverin
 uvicorn main:app --reload
@@ -158,7 +160,7 @@ uvicorn main:app --reload
 Backend do të jetë aktiv në: `http://localhost:8000`  
 Swagger UI: `http://localhost:8000/docs`
 
-> ⚠️ Pa `ANTHROPIC_API_KEY`, endpoint-i `/api/predict/diabetes/extract` kthen 500. Parashikimi i thjeshtë (`/api/predict/diabetes`) funksionon pa të.
+> ⚠️ Pa LEADTOOLS SDK dhe licencë valide, endpoint-i `/api/predict/diabetes/extract` kthen 500. Parashikimi i thjeshtë (`/api/predict/diabetes`) funksionon pa OCR.
 
 ---
 
@@ -238,20 +240,20 @@ python 08_cross_validation.py
 
 ---
 
-## 👁️ OCR e Analizave (Claude Vision)
+## 👁️ OCR e Analizave (LEADTOOLS)
 
-Mjeku ngarkon foton e analizave laboratorike te faqja **Diabetes Prediction**, dhe sistemi:
+Pacienti ngarkon foton e analizave laboratorike te faqja **Diabetes Prediction**, dhe sistemi:
 
-1. E dërgon imazhin (base64) te Claude Sonnet 4.6 me një prompt të strukturuar.
-2. Modeli kthen JSON me 8 fushat e nevojshme për parashikim:
+1. E lexon imazhin lokalisht me LEADTOOLS OCR SDK.
+2. Shërbimi `OCRService` pars-on tekstin dhe kthen JSON me 8 fushat e nevojshme për parashikim:
    `Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age`.
-3. Formulari plotësohet automatikisht; mjeku mund t'i redaktojë vlerat para se të bëjë parashikimin.
+3. Formulari plotësohet automatikisht; pacienti mund t'i redaktojë vlerat para se të bëjë parashikimin.
 
 **Karakteristikat:**
-- Formate të pranuara: JPEG, PNG, WEBP, GIF
+- Formate të pranuara: JPEG, PNG, WEBP, GIF, TIFF
 - Madhësia maksimale: 10 MB
 - Fusha që nuk gjenden në foto kthehen si `null` (nuk shpiken vlera)
-- Modeli kupton kontekstin (p.sh. "Glukoza në gjak" → fusha `Glucose`)
+- LEADTOOLS bën OCR të tekstit; parser-i kërkon emërtimet klinike (p.sh. "Glukoza në gjak" → fusha `Glucose`)
 
 ---
 
@@ -285,7 +287,7 @@ PUT    /api/appointments/{id}    # Ndrysho takim
 ### Machine Learning ⭐
 ```
 POST   /api/predict/diabetes          # Parashiko diabetin (JSON me 8 fusha)
-POST   /api/predict/diabetes/extract  # OCR e analizave (multipart, foto) — Claude vision
+POST   /api/predict/diabetes/extract  # OCR e analizave (multipart, foto) — LEADTOOLS
 GET    /api/predict/history/{id}      # Historiku i parashikimeve
 ```
 
@@ -305,7 +307,7 @@ GET    /api/reports/patient/{id}/excel  # Eksporto Excel
 - **RBAC** — Role-Based Access Control (Admin, Mjek, Pacient)
 - **SQL Injection Protection** — ORM queries + input validation
 - **Input Validation** — Pydantic models për të gjitha request-et
-- **API key i fshehur** — `ANTHROPIC_API_KEY` lexohet vetëm nga environment, asnjëherë nuk del te klienti
+- **Licenca e fshehur** — konfigurimi i LEADTOOLS lexohet vetëm nga environment, asnjëherë nuk del te klienti
 - **HTTPS** — i detyrueshëm në production
 
 ---

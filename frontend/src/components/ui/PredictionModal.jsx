@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-export default function PredictionModal({ result, onClose, type = "diabetes" }) {
+export default function PredictionModal({ result, onClose, type = "diabetes", inline = false }) {
   const probability = Math.round(Number(result?.probability || 0) * 100);
   const riskText = translateRisk(result?.risk_level);
 
@@ -21,6 +21,7 @@ export default function PredictionModal({ result, onClose, type = "diabetes" }) 
     result?.message || getDefaultMessage(type, isHighRisk, probability);
 
   useEffect(() => {
+    if (inline) return;
     const oldOverflow = document.body.style.overflow;
 
     document.body.style.overflow = "hidden";
@@ -30,186 +31,221 @@ export default function PredictionModal({ result, onClose, type = "diabetes" }) 
       document.body.style.overflow = oldOverflow;
       document.body.classList.remove("modal-open");
     };
-  }, []);
+  }, [inline]);
+
+  const cardContent = (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        maxWidth: inline ? "100%" : "680px",
+        background: "#ffffff",
+        borderRadius: "28px",
+        padding: "32px",
+        boxShadow: inline
+          ? "0 10px 30px rgba(15, 23, 42, 0.04)"
+          : "0 25px 60px -12px rgba(15, 23, 42, 0.25)",
+        border: inline
+          ? "1px solid rgba(15, 118, 110, 0.15)"
+          : "1px solid rgba(255, 255, 255, 0.8)",
+        position: "relative",
+        marginTop: inline ? "0" : "auto",
+        marginBottom: inline ? "0" : "auto",
+      }}
+    >
+      {!inline && (
+        <button
+          onClick={onClose}
+          style={{
+            position: "absolute",
+            top: "24px",
+            right: "24px",
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            border: "1px solid rgba(148, 163, 184, 0.16)",
+            background: "#f1f5f9",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "24px",
+            color: "#64748b",
+            fontWeight: "400",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#e2e8f0";
+            e.currentTarget.style.color = "#1e293b";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#f1f5f9";
+            e.currentTarget.style.color = "#64748b";
+          }}
+        >
+          ×
+        </button>
+      )}
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          marginBottom: "12px",
+        }}
+      >
+        <span style={{ fontSize: "25px" }}>🎯</span>
+
+        <h2
+          style={{
+            margin: 0,
+            fontSize: "20px",
+            fontWeight: "800",
+            color: "#1f4b7a",
+          }}
+        >
+          Rezultati i AI-së
+        </h2>
+      </div>
+
+      <div
+        style={{
+          height: "1px",
+          background: "rgba(148, 163, 184, 0.18)",
+          marginBottom: "22px",
+        }}
+      />
+
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "11px 16px",
+          borderRadius: "999px",
+          background: isHighRisk
+            ? "rgba(239, 68, 68, 0.10)"
+            : "rgba(34, 197, 94, 0.10)",
+          color: isHighRisk ? "#b42318" : "#15803d",
+          fontSize: "14px",
+          fontWeight: "800",
+          marginBottom: "22px",
+        }}
+      >
+        <span>{isHighRisk ? "🚨" : "✅"}</span>
+        {riskText}
+      </div>
+
+      <div
+        style={{
+          fontSize: "16px",
+          fontWeight: "700",
+          color: "#1e293b",
+          marginBottom: "12px",
+        }}
+      >
+        Probabiliteti për {type === "diabetes" ? "diabet" : "sëmundje zemre"}:
+      </div>
+
+      <div
+        style={{
+          width: "100%",
+          height: "28px",
+          borderRadius: "999px",
+          background: "#dbe5ef",
+          overflow: "hidden",
+          position: "relative",
+          marginBottom: "24px",
+        }}
+      >
+        <div
+          style={{
+            width: `${Math.max(10, Math.min(probability, 100))}%`,
+            height: "100%",
+            borderRadius: "999px",
+            background:
+              "linear-gradient(90deg, #7bd8a3 0%, #eacb73 58%, #ef9a86 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: "15px",
+            fontWeight: "800",
+            transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        >
+          {probability}%
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: "16px",
+          marginBottom: "22px",
+        }}
+      >
+        <InfoCard label="PARASHIKIMI" value={predictionText} />
+        <InfoCard label="MODELI I PËRDORUR" value={modelText} />
+        <InfoCard label="GRUPI K-MEANS" value={groupText} />
+        <InfoCard label="KONFIDENCA" value={`${probability}%`} />
+      </div>
+
+      <div
+        style={{
+          borderLeft: "4px solid #60a5fa",
+          background: "rgba(96, 165, 250, 0.10)",
+          padding: "16px",
+          borderRadius: "14px",
+          fontSize: "15px",
+          color: "#335b7d",
+          lineHeight: "1.6",
+        }}
+      >
+        <span style={{ marginRight: "8px" }}>
+          {isHighRisk ? "🚨" : "✅"}
+        </span>
+        {cleanBackendMessage(
+          messageText,
+          type,
+          predictionText,
+          riskText,
+          probability
+        )}
+      </div>
+    </div>
+  );
+
+  if (inline) {
+    return cardContent;
+  }
 
   return (
     <div
       onClick={onClose}
       style={{
         position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        background: "transparent",
-        backdropFilter: "blur(6px)",
-        WebkitBackdropFilter: "blur(6px)",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100vw",
+        height: "100vh",
+        zIndex: 99999,
+        background: "rgba(15, 23, 42, 0.65)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "flex-start",
         justifyContent: "center",
-        padding: "95px 20px 24px",
+        padding: "60px 20px",
         overflowY: "auto",
+        scrollBehavior: "smooth",
       }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "100%",
-          maxWidth: "700px",
-          background: "#f8fafc",
-          borderRadius: "24px",
-          padding: "24px",
-          boxShadow: "0 20px 60px rgba(15, 23, 42, 0.12)",
-          border: "1px solid rgba(148, 163, 184, 0.16)",
-          position: "relative",
-        }}
-      >
-        <button
-          onClick={onClose}
-          style={{
-            position: "absolute",
-            top: "16px",
-            right: "16px",
-            width: "38px",
-            height: "38px",
-            borderRadius: "12px",
-            border: "1px solid rgba(148, 163, 184, 0.16)",
-            background: "rgba(255, 255, 255, 0.85)",
-            cursor: "pointer",
-            fontSize: "22px",
-            color: "#64748b",
-            fontWeight: "700",
-          }}
-        >
-          ×
-        </button>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            marginBottom: "12px",
-          }}
-        >
-          <span style={{ fontSize: "25px" }}>🎯</span>
-
-          <h2
-            style={{
-              margin: 0,
-              fontSize: "20px",
-              fontWeight: "800",
-              color: "#1f4b7a",
-            }}
-          >
-            Rezultati i AI-së
-          </h2>
-        </div>
-
-        <div
-          style={{
-            height: "1px",
-            background: "rgba(148, 163, 184, 0.18)",
-            marginBottom: "22px",
-          }}
-        />
-
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "11px 16px",
-            borderRadius: "999px",
-            background: isHighRisk
-              ? "rgba(239, 68, 68, 0.10)"
-              : "rgba(34, 197, 94, 0.10)",
-            color: isHighRisk ? "#b42318" : "#15803d",
-            fontSize: "14px",
-            fontWeight: "800",
-            marginBottom: "22px",
-          }}
-        >
-          <span>{isHighRisk ? "🚨" : "✅"}</span>
-          {riskText}
-        </div>
-
-        <div
-          style={{
-            fontSize: "16px",
-            fontWeight: "700",
-            color: "#1e293b",
-            marginBottom: "12px",
-          }}
-        >
-          Probabiliteti për {type === "diabetes" ? "diabet" : "sëmundje zemre"}:
-        </div>
-
-        <div
-          style={{
-            width: "100%",
-            height: "28px",
-            borderRadius: "999px",
-            background: "#dbe5ef",
-            overflow: "hidden",
-            position: "relative",
-            marginBottom: "24px",
-          }}
-        >
-          <div
-            style={{
-              width: `${Math.max(10, Math.min(probability, 100))}%`,
-              height: "100%",
-              borderRadius: "999px",
-              background:
-                "linear-gradient(90deg, #7bd8a3 0%, #eacb73 58%, #ef9a86 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              fontSize: "15px",
-              fontWeight: "800",
-            }}
-          >
-            {probability}%
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-            gap: "16px",
-            marginBottom: "22px",
-          }}
-        >
-          <InfoCard label="PARASHIKIMI" value={predictionText} />
-          <InfoCard label="MODELI I PËRDORUR" value={modelText} />
-          <InfoCard label="GRUPI K-MEANS" value={groupText} />
-          <InfoCard label="KONFIDENCA" value={`${probability}%`} />
-        </div>
-
-        <div
-          style={{
-            borderLeft: "4px solid #60a5fa",
-            background: "rgba(96, 165, 250, 0.10)",
-            padding: "16px",
-            borderRadius: "14px",
-            fontSize: "15px",
-            color: "#335b7d",
-            lineHeight: "1.6",
-          }}
-        >
-          <span style={{ marginRight: "8px" }}>
-            {isHighRisk ? "🚨" : "✅"}
-          </span>
-          {cleanBackendMessage(
-            messageText,
-            type,
-            predictionText,
-            riskText,
-            probability
-          )}
-        </div>
-      </div>
+      {cardContent}
     </div>
   );
 }

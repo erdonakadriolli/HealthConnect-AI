@@ -25,6 +25,7 @@ import Button from "../components/ui/Button";
 import FormGrid from "../components/ui/FormGrid";
 import ErrorBox from "../components/ui/ErrorBox";
 import PredictionModal from "../components/ui/PredictionModal";
+import OCRDataCharts from "../components/ui/OCRDataCharts";
 
 const FIELD_KEYS = [
   "Pregnancies",
@@ -50,14 +51,15 @@ export default function DiabetesPredict() {
   });
 
   const [result, setResult] = useState(null);
-  const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [uploadName, setUploadName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [extractedKeys, setExtractedKeys] = useState([]);
+  const [extractedData, setExtractedData] = useState(null);
   const fileInputRef = useRef(null);
+  const resultsRef = useRef(null);
 
   function handleChange(e) {
     setForm({
@@ -89,6 +91,9 @@ export default function DiabetesPredict() {
 
       setForm(next);
       setExtractedKeys(filled);
+      if (filled.length > 0) {
+        setExtractedData({ ...next });
+      }
 
       if (filled.length === 0) {
         setError(
@@ -100,7 +105,7 @@ export default function DiabetesPredict() {
       setError(
         typeof detail === "string"
           ? detail
-          : "Leximi i imazhit deshtoi. Sigurohu qe backend-i po ekzekutohet dhe ANTHROPIC_API_KEY eshte vendosur."
+          : "Leximi i imazhit deshtoi. Sigurohu qe backend-i po ekzekutohet dhe LEADTOOLS eshte konfiguruar."
       );
     } finally {
       setUploading(false);
@@ -113,7 +118,6 @@ export default function DiabetesPredict() {
 
     setError("");
     setResult(null);
-    setShowModal(false);
     setLoading(true);
 
     const payload = {
@@ -130,7 +134,11 @@ export default function DiabetesPredict() {
     try {
       const data = await predictDiabetes(payload);
       setResult(data);
-      setShowModal(true);
+      
+      // Wait for React to render the inline result card, then scroll smoothly to it
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
     } catch {
       setError("Prediction failed. Make sure backend is running.");
     } finally {
@@ -191,19 +199,19 @@ export default function DiabetesPredict() {
             }}
           >
             <FileImage size={18} />
-            Lexo analizat prej fotos (auto-fill me AI)
+            Lexo analizat prej fotos ose PDF (auto-fill me OCR)
           </div>
 
           <div style={{ fontSize: "13px", color: "#475569", lineHeight: "1.5" }}>
-            Ngarko foton e analizes laboratorike. Modeli i vizionit do te
-            ekstraktoje vlerat ne formen e diabetit me poshte. Mund t&apos;i
-            redaktosh para se te besh parashikim.
+            Ngarko foton ose dokumentin PDF të analizës laboratorike. LEADTOOLS OCR
+            do të ekstraktojë vlerat në formën e diabetit më poshtë. Mund t&apos;i
+            redaktosh para se të bësh parashikim.
           </div>
 
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/tiff,application/pdf"
             onChange={handleFile}
             style={{ display: "none" }}
           />
@@ -229,7 +237,7 @@ export default function DiabetesPredict() {
               }}
             >
               {uploading ? <Loader2 size={16} /> : <Upload size={16} />}
-              {uploading ? "Po lexohet imazhi..." : "Zgjidh foto"}
+              {uploading ? "Po lexohet dokumenti..." : "Zgjidh foto ose PDF"}
             </button>
 
             {uploadName && !uploading && (
@@ -345,12 +353,22 @@ export default function DiabetesPredict() {
 
         <ErrorBox message={error} />
 
-        {showModal && result && (
-          <PredictionModal
-            type="diabetes"
-            result={result}
-            onClose={() => setShowModal(false)}
-          />
+        {/* Prediction Result Anchor */}
+        <div ref={resultsRef} />
+
+        {result && (
+          <div style={{ marginTop: "38px", width: "100%" }}>
+            <PredictionModal inline type="diabetes" result={result} />
+          </div>
+        )}
+
+        {extractedData && (
+          <div style={{ marginTop: "38px", width: "100%" }}>
+            <OCRDataCharts
+              extractedData={extractedData}
+              predictionResult={result}
+            />
+          </div>
         )}
       </Card>
     </Page>

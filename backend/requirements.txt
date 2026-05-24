@@ -7,4 +7,4 @@ passlib[bcrypt]
 pydantic-settings
 python-multipart
 email-validator
-anthropic
+leadtools
