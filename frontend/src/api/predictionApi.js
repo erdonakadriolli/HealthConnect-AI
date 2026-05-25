@@ -15,3 +15,9 @@ export async function extractDiabetesFromImage(file) {
 
   return res.data;
 }
+
+export async function getPredictionHistory() {
+  const res = await api.get("/api/predict/history");
+  return res.data;
+}
+
