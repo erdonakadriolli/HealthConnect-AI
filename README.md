@@ -27,7 +27,8 @@ HealthConnect AI ofron një mjedis të plotë dhe të thjeshtë për monitorim s
 *   🤖 **Parashikim me Inteligjencë Artificiale**: Model i trajnuar ML (Random Forest) që vlerëson menjëherë gjasat e diabetit bazuar në 8 tregues kryesorë metabolikë, si dhe K-Means për grupimin në kategori klinike rreziku.
 *   📄 **OCR i Analizave (Foto & PDF)**: Ngarko direkt foton apo dokumentin PDF të analizës laboratorike lokalisht. Sistemi përdor **LEADTOOLS OCR SDK** për të lexuar dhe plotësuar automatikisht të 8 fushat e nevojshme klinike.
 *   🌐 **Ndërfaqe plotësisht Dygjuhëshe (SHQIP / ENGLISH)**: Me një klikim të vetëm në krye të dritares kryesore, i gjithë aplikacioni (titujt, shpjegimet, fushat, butonat, grafikët dhe të gjitha rezultatet) kthehet në gjuhën e zgjedhur.
-*   🚨 **Sistem i Sigurisë Klinike (Emergjenca si Hipoglikemia)**: Nëse një vlerë është e ulët (si p.sh. Glukoza < 70 mg/dL që tregon Hipoglikemi), sistemi automatikisht ndez alarmin e rrezikut të lartë shëndetësor me ngjyrë të kuqe dhe jep rekomandimin e duhur për kontroll të menjëhershëm, duke parandaluar raportimet e gabuara të modelit 0%.
+*   🚨 **Sistem i Sigurisë (Emergjenca si Hipoglikemi)**: Nëse një vlerë është e ulët (si p.sh. Glukoza < 70 mg/dL që tregon Hipoglikemi), sistemi automatikisht ndez alarmin e rrezikut të lartë shëndetësor me ngjyrë të kuqe dhe jep rekomandimin e duhur për kontroll të menjëhershëm, duke parandaluar raportimet e gabuara të modelit 0%.
+*   🗄️ **Arkiva Personale dhe Historiku (Timeline)**: Ruajtja automatike e çdo parashikimi shëndetësor në databazë (tabela `lab_tests`). Në Dashboard, pacienti ka qasje në një linjë të plotë kohore të analizave të kaluara me karta interaktive që mund të hapen për të treguar të 8 parametrat, statusin e ngjyrosur klinikisht dhe rekomandimin përkatës.
 *   📊 **Vizualizim Interaktiv me Grafikë**: Grafikë interaktivë shtyllë (Bar Chart), profile rreziku (Radar Chart) dhe grafik rrethor i probabilitetit (Donut) të cilët ngjyrosen dinamikisht (e gjelbër = normale, portokalli = vlerë e ulët, e kuqe = vlerë e lartë/rrezik).
 
 ---
@@ -38,7 +39,7 @@ HealthConnect AI ofron një mjedis të plotë dhe të thjeshtë për monitorim s
 |---------|-------------|
 | **Backend** | Python — FastAPI |
 | **Frontend** | React + Vite (Chart.js, react-chartjs-2, Lucide Icons) |
-| **Databaza SQL** | PostgreSQL / SQLAlchemy |
+| **Databaza SQL** | SQLite / SQLAlchemy (gati për PostgreSQL në prodhim) |
 | **ML Models** | scikit-learn, pandas, numpy, joblib |
 | **OCR Service** | LEADTOOLS OCR SDK (me mbështetje për formatele PDF, JPEG, PNG, TIFF) |
 | **Siguria** | JWT Authentication (Access & Refresh Tokens) |
