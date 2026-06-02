@@ -1,9 +1,5 @@
-dataset,model,original_f1,tuned_f1,improvement,improvement_pct,tuned_accuracy,tuned_precision,tuned_recall,best_params,time_seconds
-diabetes,kNN,0.7692,0.7664,-0.0028,-0.37,0.8377,0.7736,0.7593,"{'metric': 'manhattan', 'n_neighbors': 7, 'weights': 'uniform'}",4.9
-diabetes,Random Forest,0.7963,0.789,-0.0073,-0.92,0.8506,0.7818,0.7963,"{'max_depth': None, 'min_samples_split': 2, 'n_estimators': 50}",7.4
-diabetes,Logistic Regression,0.6481,0.6549,0.0068,1.04,0.7468,0.6271,0.6852,"{'C': 0.01, 'penalty': 'l2', 'solver': 'liblinear'}",0.1
-diabetes,MLP,0.7679,0.6552,-0.1127,-14.68,0.7403,0.6129,0.7037,"{'activation': 'tanh', 'hidden_layer_sizes': (128, 64, 32), 'learning_rate': 'constant'}",1.7
-heart,kNN,0.8732,0.8267,-0.0465,-5.33,0.7869,0.7381,0.9394,"{'metric': 'manhattan', 'n_neighbors': 15, 'weights': 'uniform'}",0.2
-heart,Random Forest,0.8649,0.8421,-0.0228,-2.64,0.8033,0.7442,0.9697,"{'max_depth': 5, 'min_samples_split': 2, 'n_estimators': 200}",6.3
-heart,Logistic Regression,0.8493,0.8378,-0.0115,-1.35,0.8033,0.7561,0.9394,"{'C': 0.01, 'penalty': 'l2', 'solver': 'liblinear'}",0.1
-heart,MLP,0.8451,0.8378,-0.0073,-0.86,0.8033,0.7561,0.9394,"{'activation': 'tanh', 'hidden_layer_sizes': (128, 64), 'learning_rate': 'constant'}",0.9
+model,original_f1,tuned_f1,improvement,best_params
+kNN,0.7843,0.8515,0.0672,"{'metric': 'manhattan', 'n_neighbors': 7, 'weights': 'distance'}"
+Random Forest,0.8738,0.8515,-0.0223,"{'max_depth': 5, 'min_samples_split': 10, 'n_estimators': 50}"
+Logistic Regression,0.8846,0.8785,-0.0061,"{'C': 0.01, 'penalty': 'l2', 'solver': 'liblinear'}"
+MLP,0.8431,0.844,0.0009,"{'activation': 'tanh', 'hidden_layer_sizes': (64, 32)}"

@@ -1,6 +1,6 @@
 dataset,model,accuracy,precision,recall,f1_score,tn,fp,fn,tp
-diabetes,kNN,0.8571,0.8333,0.7407,0.7843,92,8,14,40
-diabetes,Random Forest,0.9156,0.9184,0.8333,0.8738,96,4,9,45
 diabetes,Logistic Regression,0.9221,0.92,0.8519,0.8846,96,4,8,46
-diabetes,MLP Arkitektura 1,0.8442,0.9167,0.6111,0.7333,97,3,21,33
+diabetes,Random Forest,0.9156,0.9184,0.8333,0.8738,96,4,9,45
 diabetes,MLP Arkitektura 2,0.8961,0.8958,0.7963,0.8431,95,5,11,43
+diabetes,kNN,0.8571,0.8333,0.7407,0.7843,92,8,14,40
+diabetes,MLP Arkitektura 1,0.8442,0.9167,0.6111,0.7333,97,3,21,33

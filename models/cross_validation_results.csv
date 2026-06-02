@@ -1,6 +1,6 @@
-dataset,model,k_folds,accuracy_mean,accuracy_std,precision_mean,precision_std,recall_mean,recall_std,f1_mean,f1_std,f1_min,f1_max
-diabetes,kNN,5,0.8762,0.0264,0.8681,0.0828,0.7767,0.0479,0.8158,0.031,0.7711,0.8608
-diabetes,Random Forest,5,0.9235,0.0249,0.9112,0.0574,0.8698,0.0378,0.8888,0.0349,0.8235,0.9268
-diabetes,Logistic Regression,5,0.8812,0.0214,0.8617,0.0761,0.8,0.0431,0.8259,0.0228,0.7912,0.8608
-diabetes,MLP Arkitektura 1,5,0.8551,0.0192,0.8386,0.0606,0.7349,0.0522,0.7802,0.0276,0.7368,0.8205
-diabetes,MLP Arkitektura 2,5,0.8828,0.0148,0.8806,0.0541,0.7767,0.0562,0.8222,0.0241,0.7895,0.8642
+model,f1_mean,f1_std
+kNN,0.8186,0.0354
+Random Forest,0.8862,0.0323
+Logistic Regression,0.8259,0.0228
+MLP Arkitektura 1,0.7802,0.0276
+MLP Arkitektura 2,0.8238,0.0247
