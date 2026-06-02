@@ -10,4 +10,5 @@ cd backend
 h1: python -m venv .venv
 h2: .venv\Scripts\activate
 h3:python -m uvicorn main:app --reload --port 8000
+
 copy paste
