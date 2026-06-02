@@ -1,0 +1,13 @@
+me dhez frontend:
+cd frontend 
+cd scr
+h1: npm install
+h2: npm run dev 
+
+
+me dhez backend:
+cd backend
+h1: python -m venv .venv
+h2: .venv\Scripts\activate
+h3:python -m uvicorn main:app --reload --port 8000
+copy paste
