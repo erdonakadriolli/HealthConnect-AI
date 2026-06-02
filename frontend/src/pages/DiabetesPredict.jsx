@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Activity, Droplets } from "lucide-react";
 
 import {
@@ -33,6 +33,9 @@ export default function DiabetesPredict() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [previousValues, setPreviousValues] = useState(null);
+  const [submittedData, setSubmittedData] = useState(null);
+
   const [uploadName, setUploadName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [extractedKeys, setExtractedKeys] = useState([]);
@@ -43,8 +46,21 @@ export default function DiabetesPredict() {
 
   const t = TRANSLATIONS[lang];
 
+  const currentPayload = useMemo(() => {
+    return buildDiabetesPayload(form);
+  }, [form]);
+
+  const hasCompleteValues = FIELD_KEYS.every((key) => {
+    return form[key] !== "" && Number.isFinite(Number(form[key]));
+  });
+
+  const formSignature = FIELD_KEYS.map((key) => form[key]).join("|");
+
   function handleChange(e) {
     const { name, value } = e.target;
+
+    setResult(null);
+    setSubmittedData(null);
 
     setForm((prev) => ({
       ...prev,
@@ -59,6 +75,8 @@ export default function DiabetesPredict() {
     setError("");
     setUploading(true);
     setUploadName(file.name);
+    setResult(null);
+    setSubmittedData(null);
 
     try {
       const data = await extractDiabetesFromImage(file);
@@ -77,10 +95,9 @@ export default function DiabetesPredict() {
 
       setForm(nextForm);
       setExtractedKeys(filledFields);
+      setExtractedData(filledFields.length > 0 ? { ...nextForm } : null);
 
-      if (filledFields.length > 0) {
-        setExtractedData(nextForm);
-      } else {
+      if (filledFields.length === 0) {
         setError(t.errorNoFields);
       }
     } catch (exc) {
@@ -102,12 +119,15 @@ export default function DiabetesPredict() {
     setResult(null);
     setLoading(true);
 
-    const payload = buildDiabetesPayload(form);
+    const payload = currentPayload;
+    const dataSnapshot = { ...form };
 
     try {
-      const data = await predictDiabetes(payload);
+      const data = await predictDiabetes(payload, { persist: true });
       const finalResult = applyClinicalOverrides(data, payload);
 
+      setPreviousValues(submittedData);
+      setSubmittedData(dataSnapshot);
       setResult(finalResult);
 
       setTimeout(() => {
@@ -155,6 +175,7 @@ export default function DiabetesPredict() {
           t={t}
           form={form}
           loading={loading}
+          disabled={!hasCompleteValues}
           onChange={handleChange}
           onSubmit={handleSubmit}
         />
@@ -169,17 +190,20 @@ export default function DiabetesPredict() {
               inline
               type="diabetes"
               result={result}
-              formValues={form}
+              formValues={submittedData || form}
               lang={lang}
             />
           </div>
         )}
 
-        {extractedData && (
+        {result && submittedData && (
           <div style={styles.resultSection}>
             <OCRDataCharts
-              extractedData={extractedData}
+              key={`results-${formSignature}`}
+              extractedData={submittedData}
               predictionResult={result}
+              previousData={previousValues}
+              sourceLabel={extractedData ? "OCR + manual edits" : "Manual input"}
               lang={lang}
             />
           </div>

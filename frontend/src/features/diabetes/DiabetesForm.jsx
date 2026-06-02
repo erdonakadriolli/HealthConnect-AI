@@ -10,6 +10,7 @@ export default function DiabetesForm({
   t,
   form,
   loading,
+  disabled,
   onChange,
   onSubmit,
 }) {
@@ -34,7 +35,7 @@ export default function DiabetesForm({
         );
       })}
 
-      <Button type="submit" variant="green" fullWidth disabled={loading}>
+      <Button type="submit" variant="green" fullWidth disabled={loading || disabled}>
         {loading ? (
           <>
             <Loader2 size={18} />
