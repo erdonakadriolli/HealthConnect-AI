@@ -1,7 +1,8 @@
 import api from "./axios";
 
-export async function predictDiabetes(data) {
-  const res = await api.post("/api/predict/diabetes", data);
+export async function predictDiabetes(data, options = {}) {
+  const params = options.persist === false ? { persist: false } : undefined;
+  const res = await api.post("/api/predict/diabetes", data, { params });
   return res.data;
 }
 
