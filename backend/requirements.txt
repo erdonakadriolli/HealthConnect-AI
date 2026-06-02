@@ -7,4 +7,9 @@ passlib[bcrypt]
 pydantic-settings
 python-multipart
 email-validator
+numpy
+pandas
+scikit-learn
+joblib
+bcrypt==4.0.1
 leadtools
