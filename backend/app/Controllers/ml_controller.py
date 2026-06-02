@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile, Depends
+from fastapi import APIRouter, File, UploadFile, Depends, Query
 from sqlalchemy.orm import Session
 
 from app import models
@@ -16,6 +16,7 @@ ocr_service = OCRService()
 @router.post("/diabetes")
 def predict_diabetes(
     payload: DiabetesInput,
+    persist: bool = Query(True),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -40,6 +41,9 @@ def predict_diabetes(
         result["risk_level"] = risk_level
         result["risk_group"] = risk_group
         result["message"] = f"Rrezik i Lartë! Vlerat e glukozës janë shumë të ulëta ({glucose} mg/dL), gjë që tregon Hipoglikemi. Kjo paraqet rrezik të lartë shëndetësor! Rekomandohet kontroll i menjëhershëm mjekësor."
+
+    if not persist:
+        return result
 
     # Get or create patient profile for current user
     patient = db.query(models.Patient).filter(models.Patient.user_id == current_user.id).first()

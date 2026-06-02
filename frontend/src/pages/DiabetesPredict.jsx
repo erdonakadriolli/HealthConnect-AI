@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Activity,
   Dna,
@@ -108,7 +108,7 @@ const TRANSLATIONS = {
 };
 
 export default function DiabetesPredict() {
-  const [form, setForm] = useState({
+  const emptyForm = {
     Pregnancies: "",
     Glucose: "",
     BloodPressure: "",
@@ -117,12 +117,18 @@ export default function DiabetesPredict() {
     BMI: "",
     DiabetesPedigreeFunction: "",
     Age: "",
+  };
+
+  const [form, setForm] = useState({
+    ...emptyForm,
   });
 
   const [lang, setLang] = useState("en"); // Language state: 'en' or 'sq' (defaults to English EN)
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [previousValues, setPreviousValues] = useState(null);
+  const [submittedData, setSubmittedData] = useState(null);
 
   const [uploadName, setUploadName] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -132,11 +138,21 @@ export default function DiabetesPredict() {
   const resultsRef = useRef(null);
 
   const t = TRANSLATIONS[lang];
+  const currentPayload = useMemo(() => toPayload(form), [form]);
+  const hasCompleteValues = FIELD_KEYS.every(
+    (key) => form[key] !== "" && Number.isFinite(Number(form[key]))
+  );
+  const formSignature = FIELD_KEYS.map((key) => form[key]).join("|");
 
   function handleChange(e) {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
+    setResult(null);
+    setSubmittedData(null);
+    setForm((prev) => {
+      const next = {
+        ...prev,
+        [e.target.name]: e.target.value,
+      };
+      return next;
     });
   }
 
@@ -147,6 +163,8 @@ export default function DiabetesPredict() {
     setError("");
     setUploading(true);
     setUploadName(file.name);
+    setResult(null);
+    setSubmittedData(null);
 
     try {
       const data = await extractDiabetesFromImage(file);
@@ -163,9 +181,7 @@ export default function DiabetesPredict() {
 
       setForm(next);
       setExtractedKeys(filled);
-      if (filled.length > 0) {
-        setExtractedData({ ...next });
-      }
+      setExtractedData(filled.length > 0 ? { ...next } : null);
 
       if (filled.length === 0) {
         setError(t.errorNoFields);
@@ -190,30 +206,14 @@ export default function DiabetesPredict() {
     setResult(null);
     setLoading(true);
 
-    const payload = {
-      Pregnancies: Number(form.Pregnancies),
-      Glucose: Number(form.Glucose),
-      BloodPressure: Number(form.BloodPressure),
-      SkinThickness: Number(form.SkinThickness),
-      Insulin: Number(form.Insulin),
-      BMI: Number(form.BMI),
-      DiabetesPedigreeFunction: Number(form.DiabetesPedigreeFunction),
-      Age: Number(form.Age),
-    };
+    const payload = currentPayload;
+    const dataSnapshot = { ...form };
 
     try {
-      const data = await predictDiabetes(payload);
-      
-      // Clinical safety override for Hypoglycemia (Glucose < 70)
-      if (payload.Glucose > 0 && payload.Glucose < 70) {
-        data.risk_level = "High (Hypoglycemia)";
-        data.prediction = 1;
-        data.probability = 1.0; // 100% risk to represent clinical emergency
-        data.risk_group = "Rrezik i Lartë (Hipoglikemi)";
-        data.message = `Rrezik i Lartë! Vlerat e glukozës janë shumë të ulëta (${payload.Glucose} mg/dL), gjë që tregon Hipoglikemi. Kjo paraqet rrezik të lartë shëndetësor! Rekomandohet kontroll i menjëhershëm mjekësor.`;
-      }
-      
-      setResult(data);
+      const data = await predictDiabetes(payload, { persist: true });
+      setPreviousValues(submittedData);
+      setSubmittedData(dataSnapshot);
+      setResult(applyClinicalOverride(data, payload));
       
       // Wait for React to render the inline result card, then scroll smoothly to it
       setTimeout(() => {
@@ -457,7 +457,7 @@ export default function DiabetesPredict() {
             placeholder={t.placeholderAge}
           />
 
-          <Button type="submit" variant="green" fullWidth disabled={loading}>
+          <Button type="submit" variant="green" fullWidth disabled={loading || !hasCompleteValues}>
             {loading ? (
               <>
                 <Loader2 size={18} />
@@ -489,11 +489,14 @@ export default function DiabetesPredict() {
           </div>
         )}
 
-        {extractedData && (
+        {result && submittedData && (
           <div style={{ marginTop: "38px", width: "100%" }}>
             <OCRDataCharts
-              extractedData={extractedData}
+              key={`results-${formSignature}`}
+              extractedData={submittedData}
               predictionResult={result}
+              previousData={previousValues}
+              sourceLabel={extractedData ? "OCR + manual edits" : "Manual input"}
               lang={lang}
             />
           </div>
@@ -501,4 +504,29 @@ export default function DiabetesPredict() {
       </Card>
     </Page>
   );
+}
+
+function toPayload(values) {
+  return {
+    Pregnancies: Number(values.Pregnancies),
+    Glucose: Number(values.Glucose),
+    BloodPressure: Number(values.BloodPressure),
+    SkinThickness: Number(values.SkinThickness),
+    Insulin: Number(values.Insulin),
+    BMI: Number(values.BMI),
+    DiabetesPedigreeFunction: Number(values.DiabetesPedigreeFunction),
+    Age: Number(values.Age),
+  };
+}
+
+function applyClinicalOverride(data, payload) {
+  const next = { ...data };
+  if (payload.Glucose > 0 && payload.Glucose < 70) {
+    next.risk_level = "High (Hypoglycemia)";
+    next.prediction = 1;
+    next.probability = 1.0;
+    next.risk_group = "Rrezik i Lartë (Hipoglikemi)";
+    next.message = `Rrezik i Lartë! Vlerat e glukozës janë shumë të ulëta (${payload.Glucose} mg/dL), gjë që tregon Hipoglikemi. Kjo paraqet rrezik të lartë shëndetësor! Rekomandohet kontroll i menjëhershëm mjekësor.`;
+  }
+  return next;
 }
