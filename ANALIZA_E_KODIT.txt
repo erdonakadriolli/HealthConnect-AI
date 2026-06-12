@@ -1,0 +1,211 @@
+================================================================================
+     HEALTHCONNECT AI — ÇKA ËSHTË FUNKSIONALE (VETËM AJO QË PUNON)
+================================================================================
+Data: 2 Qershor 2026
+
+Ky dokument liston vetëm pjesët që janë të lidhura dhe përdoren në praktikë
+(frontend ↔ backend ↔ databazë ↔ ML). Nuk përfshin tabelat/skedarët që janë
+vetëm në kod por nuk kanë API ose UI.
+
+================================================================================
+1. RRJEDHA E PLOTË E PËRDORUESIT (END-TO-END)
+================================================================================
+
+  [Regjistrim]  /register  →  POST /api/auth/register
+                →  krijon User në DB, rol "patient" automatikisht
+                →  ridrejtim në /login
+
+  [Login]       /login  →  POST /api/auth/login
+                →  access_token + refresh_token në localStorage
+                →  /dashboard
+
+  [Dashboard]   /dashboard  →  GET /api/predict/history (me Bearer token)
+                →  liston analizat e ruajtura (lab_tests)
+                →  karta të zgjerueshme, shqip/anglisht
+                →  buton → /diabetes
+
+  [Diabet]      /diabetes
+      a) Ngarkon foto/PDF  →  POST /api/predict/diabetes/extract
+         →  OCR (LEADTOOLS ose demo) plotëson formularin (8 fusha)
+      b) Plotëson/editon manualisht 8 vlera
+      c) "Predict"  →  POST /api/predict/diabetes?persist=true
+         →  ML (Random Forest + K-Means)
+         →  override nëse glukozë < 70 (hipoglikemi)
+         →  ruan LabTest në DB
+         →  modal me probabilitet + grafikë (bar, radar, donut)
+
+  [Logout]      Navbar  →  fshin token-at, /login
+
+  [Mbrojtje]    Pa token: /dashboard dhe /diabetes → /login
+                Me token: /login dhe /register → /dashboard
+
+================================================================================
+2. TABELAT E DATABAZËS QË PËRDOREN REALISHT
+================================================================================
+
+  Vetëm 6 grupe tabelash kanë kod aktiv (INSERT/SELECT):
+
+  users              Regjistrim, login, /me
+  refresh_tokens     Login dhe refresh token (rotation në backend)
+  roles              Krijohen në start: admin, doctor, patient
+  user_roles         Çdo user i ri → patient
+  permissions        manage_users për admin
+  role_permissions   Lidh admin ↔ manage_users
+  patients           Krijohet automatikisht për user-in në parashikimin e parë
+  lab_tests          Ruhet çdo parashikim (8 vlera + ml_prediction + ml_confidence)
+
+  Të gjitha tabelat e tjera në models.py (mjekë, termine, receta, etj.)
+  NUK përdoren — pa API, pa frontend.
+
+================================================================================
+3. API FUNKSIONALE
+================================================================================
+
+  Përdoren nga aplikacioni React:
+  ─────────────────────────────────
+  POST   /api/auth/register
+  POST   /api/auth/login
+  POST   /api/predict/diabetes          (?persist=true|false)
+  POST   /api/predict/diabetes/extract    (upload file)
+  GET    /api/predict/history
+
+  Ekzistojnë në backend, por React NUK i thërret:
+  ───────────────────────────────────────────────
+  POST   /api/auth/refresh        (refresh_token ruhet por s’përdoret)
+  GET    /api/auth/me             (authApi.getMe ekziston, asnjë faqe e thërret)
+  GET    /api/auth/admin/users    (vetëm Swagger / klient manual)
+  WS     /ws/notifications/{id}   (pa UI në frontend)
+  WS     /ws/chat/{room}          (pa UI në frontend)
+  GET    /health                  (kontroll serveri, jo nga app)
+
+================================================================================
+4. BACKEND — SKEDARËT QË PUNOJNË
+================================================================================
+
+  main.py                 Start server, CORS, router-at, krijon tabela DB
+  database.py             SQLite default (ose Postgres nga .env)
+  models.py               Përdoren vetëm: User, Role, UserRole, Permission,
+                          RolePermission, RefreshToken, Patient, LabTest
+  schemas.py              Validim për auth + diabet + OCR response
+  security.py             JWT + bcrypt
+  deps.py                 get_current_user për rrugët e mbrojtura
+
+  auth_controller.py      register, login, refresh, me, admin/users
+  auth_service.py         Logjika auth (përdoret plotësisht për register/login/refresh)
+  auth_repository.py      DB për user, token, role
+
+  ml_controller.py        predict, extract, history  ← bërthama e app-it
+  ml_service.py           Ngarkon ml/05_predict.py
+  ocr_service.py          Lexon analizën nga imazh/PDF
+
+  websocket_*             Kod funksional në server, por pa klient React
+
+================================================================================
+5. FRONTEND — ÇKA PUNON
+================================================================================
+
+  Faqet (4):
+    Login.jsx           Login → token → dashboard
+    Register.jsx        Regjistrim → login
+    Dashboard.jsx       Historik + link te diabeti
+    DiabetesPredict.jsx Form + OCR + parashikim + grafikë
+
+  API:
+    axios.js            Bearer token automatik (baseURL: 127.0.0.1:7001)
+    authApi.js          register, login  (getMe jo i përdorur)
+    predictionApi.js    predict, extract, history
+
+  Rrugëtim & auth:
+    App.jsx             4 rrugë + redirect
+    ProtectedRoute.jsx  Kërkon access_token
+    PublicRoute.jsx     S’lejon login/register nëse je i loguar
+    token.js            localStorage
+    Navbar.jsx          Navigim + logout
+
+  Diabetes (features/diabetes/):
+    diabetesFields.js         8 fusha + payload
+    diabetesTranslations.js   sq / en
+    DiabetesForm.jsx          Formulari
+    DiabetesOCRUpload.jsx     Upload foto
+
+  Dashboard (features/dashboard/):
+    dashboardTranslations.js
+    HistoryCard.jsx           Një analizë në listë
+    EmptyHistory.jsx          Kur s’ka historik
+
+  UI që përdoren në faqe:
+    Page, Card, Button, InputField, ErrorBox, PageHeader, ActionCard,
+    PredictionModal, OCRDataCharts, LanguageSwitch, NavButton, FormGrid
+
+================================================================================
+6. MACHINE LEARNING — ÇKA DUHET PËR APP-IN LIVE
+================================================================================
+
+  Për backend të japë parashikim, duhen ekzekutuar (herën e parë):
+
+    python ml/02_preprocessing.py
+    python ml/03_train_models.py
+    python ml/04_kmeans_clustering.py
+
+  Skedarët që lexon API (nga ml/05_predict.py):
+    models/diabetes_random_forest.pkl
+    models/diabetes_kmeans.pkl
+    datasets/processed/scalers.pkl
+
+  Funksioni aktiv: predict_diabetes()
+    → prediction 0/1, probability, risk_level, risk_group, message
+
+  Skriptet e tjera (01, 06, 07, 08, 00, notebook) janë për analizë/trajnim —
+  nuk nisen automatikisht me serverin, por janë funksionale kur i ekzekuton ti.
+
+================================================================================
+7. VEÇORITË FUNKSIONALE (LISTË)
+================================================================================
+
+  ✓ Regjistrim përdoruesi (emër, mbiemër, email, fjalëkalim min 8)
+  ✓ Login me JWT (access 30 min, refresh 7 ditë në DB)
+  ✓ Faqe të mbrojtura pa token
+  ✓ Parashikim diabeti nga 8 tregues
+  ✓ Ruajtje automatik e çdo parashikimi në historik
+  ✓ Shfaqje historiku në Dashboard (data, vlera, rrezik)
+  ✓ OCR: nxjerr fusha nga foto/PDF (LEADTOOLS ose OCR_DEMO_FALLBACK=true)
+  ✓ Plotësim automatik i formularit pas OCR
+  ✓ Override hipoglikemie (glukozë < 70) — backend + frontend
+  ✓ Modal rezultati me probabilitet dhe mesazh
+  ✓ Grafikë pas parashikimit (bar, radar, donut) me ngjyra klinike
+  ✓ Ndërfaqe shqip / anglisht (dashboard + diabet)
+  ✓ Swagger në /docs për testim API
+
+================================================================================
+8. KUSHTET QË DUHEN PËR TË PUNUAR LOKALISHT
+================================================================================
+
+  Backend:
+    cd backend → venv → pip install -r requirements.txt
+    python -m uvicorn main:app --reload --port 8000
+    (ose porti që përputhet me frontend)
+
+  Frontend:
+    cd frontend → npm install → npm run dev
+
+  RËNDËSISHËM: axios.js ka baseURL http://127.0.0.1:7001
+  Backend zakonisht është në 8000 → duhet një port i njëjtë (ndrysho axios ose uvicorn).
+
+  ML: modelet .pkl të gjeneruara (shiko seksionin 6).
+
+  OCR (opsional):
+    LEADTOOLS i instaluar + .env
+    OSE OCR_DEMO_FALLBACK=true për testim pa SDK
+
+================================================================================
+9. PËRMBLEDHJE NJË FJALI
+================================================================================
+
+  Aplikacioni funksional është: llogari personale → fut analizën (dorazi ose
+  nga foto) → merr rrezikun e diabetit me ML → e sheh historikun në dashboard,
+  në shqip ose anglisht. Gjithçka tjetër në repo (mjekë, termine, chat WS,
+  admin UI, 16+ tabela) nuk është pjesë e produktit që punon sot.
+
+================================================================================
+                         FUND
+================================================================================

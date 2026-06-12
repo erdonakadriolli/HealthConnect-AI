@@ -1,0 +1,571 @@
+================================================================================
+   HEALTHCONNECT AI — ANALIZË FUNKSION-PËR-FUNKSION (ÇKA BËN ÇDO PJESË)
+================================================================================
+Legjenda:
+  [OK]  = përdoret në aplikacionin që punon sot
+  [API] = vetëm backend (Swagger/Postman), React nuk e thërret
+
+================================================================================
+BACKEND
+================================================================================
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/main.py
+──────────────────────────────────────────────────────────────────────────────
+
+lifespan(app)                          [OK]
+  Kur starton serveri: krijon të gjitha tabelat në databazë (create_all).
+  Kur mbyllet: asgjë speciale (yield).
+
+health()                               [OK]
+  GET /health → {"status": "ok"} — kontroll nëse serveri është gjallë.
+
+(app.add_middleware CORS)              [OK]
+  Lejon frontend nga localhost:5173 të bëjë kërkesa me cookie/credentials.
+
+app.include_router(...)                [OK]
+  Lidh auth, ml/predict, websocket në aplikacion.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/database.py
+──────────────────────────────────────────────────────────────────────────────
+
+class Settings                         [OK]
+  Lexon .env: DATABASE_URL, JWT_SECRET, kohët e skadimit të token-ave.
+
+engine, SessionLocal, Base             [OK]
+  Lidhja me DB (default SQLite healthconnectai.db).
+
+get_db()                               [OK]
+  Generator: hap session SQLAlchemy për çdo kërkesë, e mbyll pas përfundimit.
+  Përdoret si Depends(get_db) në controller-at.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/security.py
+──────────────────────────────────────────────────────────────────────────────
+
+hash_password(password)                [OK]
+  Kthen fjalëkalimin të hash-uar me bcrypt (ruhet në users.password_hash).
+
+verify_password(password, hash)        [OK]
+  Krahasohet fjalëkalimi i futur me hash-in në login.
+
+create_token(subject, delta, type)     [OK]
+  Krijon JWT me: sub=user_id, type=access|refresh, exp=skadimi.
+
+create_access_token(subject)           [OK]
+  JWT që skadon pas 30 min (default).
+
+create_refresh_token(subject)          [OK]
+  JWT që skadon pas 7 ditësh.
+
+decode_token(token)                    [OK]
+  Lexon JWT; nëse i pavlefshëm → ValueError.
+
+hash_token(token)                      [OK]
+  SHA256 e refresh token-it para ruajtjes në DB (nuk ruhet plaintext).
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/deps.py
+──────────────────────────────────────────────────────────────────────────────
+
+get_current_user(...)                  [OK]
+  Lexon header Authorization: Bearer <token>.
+  Nëse mungon → 401.
+  Thërret AuthService.get_current_user_from_token → kthen objekt User.
+  Përdoret te /predict/* dhe /auth/me.
+
+require_permissions(["manage_users"])  [API]
+  Kthen një dependency: së pari get_current_user, pastaj kontrollon permissions.
+  Përdoret vetëm te GET /api/auth/admin/users.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/schemas.py (klasa Pydantic — validim automatik)
+──────────────────────────────────────────────────────────────────────────────
+
+UserCreate                             [OK]  register: emër, email, password min 8
+LoginInput                             [OK]  login
+TokenResponse                          [OK]  access_token, refresh_token, bearer
+RefreshInput                           [API] refresh
+DiabetesInput                          [OK]  8 fusha numerike për ML
+DiabetesExtractResponse                [OK]  8 fusha opsionale pas OCR
+UserRead                               [OK]  përgjigje pa password
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/Controllers/auth_controller.py
+──────────────────────────────────────────────────────────────────────────────
+
+register(payload, db)                  [OK]
+  POST /api/auth/register → AuthService.register → UserRead.
+
+login(payload, db)                     [OK]
+  POST /api/auth/login → token-at.
+
+refresh(payload, db)                   [API]
+  POST /api/auth/refresh — React nuk e përdor ende.
+
+me(user)                               [API]
+  GET /api/auth/me — kthen user-in nga token.
+
+list_users_for_admin(...)              [API]
+  GET /api/auth/admin/users — kërkon permission manage_users.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/Services/auth_service.py
+──────────────────────────────────────────────────────────────────────────────
+
+__init__(db)                           [OK]
+  Krijon AuthRepository dhe thërret ensure_base_roles() (admin/doctor/patient).
+
+register(first, last, email, pass)     [OK]
+  Nëse email ekziston → 409.
+  Krijon user, i jep rolin "patient", kthen user.
+
+login(email, password)                 [OK]
+  Gjen user, verify_password.
+  Krijon access + refresh JWT, ruan hash refresh në DB.
+  Kthen {"access_token", "refresh_token"}.
+
+refresh(refresh_token)                 [API]
+  Dekodon JWT type=refresh, kontrollon në DB që nuk është revoked.
+  Revokon të vjetrin, jep çift të ri token-ash (rotation).
+
+get_current_user_from_token(token)     [OK]
+  Dekodon access token, gjen user nga sub=id.
+
+check_permissions(user_id, required)   [API]
+  Nëse mungon permission → 403.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/Repositories/auth_repository.py
+──────────────────────────────────────────────────────────────────────────────
+
+create_user(...)                       [OK]  INSERT users, email lowercase
+get_user_by_email(email)               [OK]  SELECT një user
+get_user_by_id(user_id)                [OK]  SELECT për JWT
+
+save_refresh_token(...)                [OK]  INSERT refresh_tokens
+get_active_refresh_token(hash)         [API] për refresh endpoint
+revoke_refresh_token(token_id)         [API] vendos revoked=True
+
+ensure_base_roles()                    [OK]
+  Nëse mungojnë: roles admin/doctor/patient, permission manage_users,
+  lidhje admin ↔ manage_users.
+
+assign_role_if_absent(user_id, role)   [OK]
+  Shton rresht në user_roles (p.sh. patient pas regjistrimit).
+
+get_user_permissions(user_id)        [API]
+  JOIN roles/permissions → set emrash permission.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/Services/ml_service.py
+──────────────────────────────────────────────────────────────────────────────
+
+__init__()                             [OK]
+  Ngarkon skedarin ml/05_predict.py si modul Python dinamik.
+  Ruaj referencën module.predict_diabetes.
+  Nëse .pkl mungojnë → gabim kur starton ose kur parashikon.
+
+diabetes(payload: dict)                [OK]
+  Thërret predict_diabetes(payload).
+  Nëse kthen {"error": "..."} → HTTP 400.
+  Përndryshe kthen dict me prediction, probability, risk_level, etj.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/Controllers/ml_controller.py
+──────────────────────────────────────────────────────────────────────────────
+
+predict_diabetes(payload, persist, db, current_user)   [OK]
+  Rreshti 24: ml_service.diabetes — parashikim ML.
+  Rreshti 34-43: nëse Glucose < 70 → override hipoglikemi (forcon rrezik).
+  Rreshti 45-46: nëse persist=false → kthen rezultatin pa ruajtur DB.
+  Rreshti 49-54: gjen ose krijon Patient për user-in aktual.
+  Rreshti 57-72: INSERT lab_tests me 8 vlera + ml_prediction + ml_confidence.
+  Kthen të njëjtin JSON që sheh frontend-i.
+
+extract_diabetes_from_image(file)      [OK]
+  POST extract — pa auth në kod (UploadFile).
+  → ocr_service.extract_diabetes_fields(file).
+
+get_prediction_history(db, current_user) [OK]
+  Nuk ka patient → [].
+  SELECT lab_tests ORDER BY created_at DESC.
+  Për çdo test: llogarit risk_level/risk_group (hipo ose nga probability).
+  Kthen listë dict për Dashboard.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/Services/ocr_service.py
+──────────────────────────────────────────────────────────────────────────────
+
+class OCRSettings                      [OK]  path LEADTOOLS nga .env
+
+__init__()                             [OK]  lexon install_dir, license, demo_fallback
+
+extract_diabetes_fields(file)          [OK]
+  Kontrollon content_type dhe madhësi ≤10MB.
+  Lexon bytes → _extract_text_with_leadtools → _parse_diabetes_fields.
+  Kthen dict me 8 çelësa (null ku s’gjendet).
+
+_extract_text_with_leadtools(data, suffix) [OK]
+  Konfiguron LEADTOOLS, OCR engine, shkruan tekst në temp file.
+  Nëse dështon dhe OCR_DEMO_FALLBACK=true → _demo_text().
+
+_configure_leadtools()                [OK]
+  Shton path Python të LEADTOOLS, ngarkon licencën UnlockSupport.
+
+_parse_diabetes_fields(text)           [OK]
+  Për çdo fushë: _find_value_after_label me sinonime shqip/en/de/it.
+
+_find_value_after_label(text, labels)  [OK]
+  Regex: pas emrit të fushës gjen numrin (edhe 120/80 → merr 80).
+
+_normalize_text(value)                 [OK]
+  Heq ë/ç speciale, normalizon hapësirat për regex.
+
+_demo_text()                           [OK]
+  Tekst fiks me DEMO_VALUES kur nuk ka SDK.
+
+_env_bool(name, default)               [OK]
+  Lexon OCR_DEMO_FALLBACK nga environment.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/Controllers/websocket_controller.py  [API — pa UI]
+──────────────────────────────────────────────────────────────────────────────
+
+notifications_socket(ws, user_id)      [API]
+  Pranon lidhje WS, loop: merr tekst, dërgon JSON ack.
+
+chat_socket(ws, room_id)               [API]
+  Broadcast mesazh në të gjithë në room.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: backend/app/Services/websocket_service.py  [API]
+──────────────────────────────────────────────────────────────────────────────
+
+connect_notifications / disconnect_notifications
+push_notification(user_id, message)
+connect_chat / disconnect_chat / broadcast_chat
+  Menaxhon lista WebSocket në memorie (defaultdict).
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: ml/05_predict.py  (bërthama ML)
+──────────────────────────────────────────────────────────────────────────────
+
+load_model(filename)                   [OK]
+  pickle.load nga models/
+
+load_scaler(dataset_name)              [OK]
+  lexon scalers.pkl → StandardScaler për "diabetes"
+
+(bloc try në fund skedari)             [OK]
+  Ngarkon MODEL_DIABETES, MODEL_KMEANS, SCALER_DIABETES në import.
+  Printon [OK] ose [GABIM] nëse mungojnë .pkl.
+
+predict_diabetes(patient_data)         [OK]
+  Kontrollon 8 fusha.
+  DataFrame → scaler.transform → RandomForest.predict + predict_proba.
+  risk_level: <0.3 ulet, <0.6 mesatar, else lartë.
+  K-Means: cluster_id → risk_group nga risk_labels në pkl.
+  message: tekst shqip për mjekun/pacientin.
+  Kthen dict (ose {"error": ...}).
+
+run_tests()                            [OK]
+  Vetëm kur ekzekuton: python ml/05_predict.py — 2 pacientë shembull.
+
+
+================================================================================
+FRONTEND
+================================================================================
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/main.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+(ekzekutim)                              [OK]
+  Monton <App /> në #root, StrictMode, import index.css.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/App.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+App()                                    [OK]
+  BrowserRouter + Navbar.
+  Rrugët: / → dashboard; login/register public; dashboard/diabetes protected.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/utils/token.js
+──────────────────────────────────────────────────────────────────────────────
+
+saveTokens(access, refresh)            [OK]  localStorage
+getAccessToken()                       [OK]  lexon access_token
+removeTokens()                         [OK]  logout
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/api/axios.js
+──────────────────────────────────────────────────────────────────────────────
+
+api (axios instance)                     [OK]
+  baseURL: http://127.0.0.1:7001  ← DUHET përputhur me portin e uvicorn!
+
+interceptor request                    [OK]
+  Shton Authorization: Bearer <token> nëse ekziston.
+  console.log token (debug — mund të hiqet).
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/api/authApi.js
+──────────────────────────────────────────────────────────────────────────────
+
+registerUser(data)                     [OK]  POST /api/auth/register
+loginUser(data)                        [OK]  POST /api/auth/login
+getMe()                                [API] nuk thirret nga asnjë faqe
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/api/predictionApi.js
+──────────────────────────────────────────────────────────────────────────────
+
+predictDiabetes(data, {persist})       [OK]  POST /api/predict/diabetes
+extractDiabetesFromImage(file)         [OK]  FormData multipart extract
+getPredictionHistory()                 [OK]  GET /api/predict/history
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/components/ProtectedRoute.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+ProtectedRoute({children})             [OK]
+  Pa token → <Navigate to="/login">.
+  Me token → shfaq children (Dashboard, Diabetes).
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/components/PublicRoute.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+PublicRoute({children})                [OK]
+  Me token → /dashboard (s’lejon login dy herë).
+  Pa token → login/register.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/components/Navbar.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+Navbar()                                 [OK]
+  isLoggedIn nga getAccessToken().
+  Scroll: fsheh header kur scroll poshtë (hidden state).
+  MutationObserver: fsheh kur body.classList ka "modal-open".
+  handleLogout: removeTokens → /login.
+  isActive(path): theks rrugën aktive.
+  Link: Dashboard, Diabetes, Login/Register ose Logout.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/pages/Login.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+Login()                                  [OK]
+  state: form {email, password}, error, loading.
+
+handleChange(e)                          [OK]
+  Përditëson form[name]=value.
+
+handleSubmit(e)                          [OK]
+  preventDefault → loginUser(form) → saveTokens → navigate /dashboard.
+  catch → "Login failed...".
+
+(UI: Page variant green, InputField, Button, Link Register — stile inline)
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/pages/Register.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+Register()                               [OK]
+  form: first_name, last_name, email, password.
+
+handleSubmit                             [OK]
+  registerUser → navigate /login (nuk auto-login).
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/pages/Dashboard.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+Dashboard()                              [OK]
+  lang sq|en, history[], loading, error, expandedIds{}.
+
+useEffect (fetchHistory)                 [OK]
+  getPredictionHistory() → setHistory ose error.
+
+toggleExpand(id)                         [OK]
+  Hap/mbyll detajet e HistoryCard.
+
+render: LanguageSwitch, ActionCard→/diabetes, listë HistoryCard ose EmptyHistory.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/pages/DiabetesPredict.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+DiabetesPredict()                        [OK]
+  form, lang, result, error, loading, OCR state, refs.
+
+currentPayload (useMemo)                 [OK]
+  buildDiabetesPayload(form) — numra për API.
+
+hasCompleteValues                        [OK]
+  true vetëm kur të 8 fushat janë numra valid.
+
+handleChange                             [OK]
+  Ndryshon fushë → pastron result/submittedData.
+
+handleFile(e)                            [OK]
+  extractDiabetesFromImage → plotëson form nga OCR.
+  extractedKeys = fushat që u mbushën.
+  error nëse 0 fusha.
+
+handleSubmit                             [OK]
+  predictDiabetes(payload, persist:true).
+  applyClinicalOverrides (glucose<70) në frontend.
+  scroll te resultsRef.
+
+applyClinicalOverrides(data, payload)    [OK]
+  E njëjta logjikë si backend për hipoglikemi.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/features/diabetes/diabetesFields.js
+──────────────────────────────────────────────────────────────────────────────
+
+FIELD_KEYS                               [OK]  lista 8 emrash
+INITIAL_DIABETES_FORM                    [OK]  të gjitha ""
+DIABETES_FIELDS                          [OK]  metadata: icon, labelKey, step
+buildDiabetesPayload(form)               [OK]  {Pregnancies: Number, ...}
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/features/diabetes/DiabetesForm.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+DiabetesForm({t, form, loading, disabled, onChange, onSubmit}) [OK]
+  map DIABETES_FIELDS → InputField.
+  Button submit disabled nëse loading ose !hasCompleteValues.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/features/diabetes/DiabetesOCRUpload.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+DiabetesOCRUpload(...)                   [OK]
+  input file hidden (jpeg,png,webp,gif,tiff,pdf).
+  Button hap file picker; shfaq emër skedari + sa fusha u mbushën.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/features/dashboard/dashboardHelpers.js
+──────────────────────────────────────────────────────────────────────────────
+
+getFieldStatus(field, value, t)          [OK]
+  Krahasohet me NORMAL_RANGES → normal / low / high + ngjyra.
+
+formatDate(iso, lang)                    [OK]
+  sq-AL ose en-US me datë dhe orë.
+
+getRiskType(item)                        [OK]
+  glucose<70 → hypo; prediction=1 → high; confidence≥0.3 → medium; else normal.
+
+getRecommendationConfig(item, t)         [OK]
+  Tekst + ngjyra rekomandimi sipas getRiskType.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/features/dashboard/HistoryCard.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+RiskBadge({item, t})                     [OK]
+  Shfaq etiketë rreziku me ikonë.
+
+RecommendationBox({item, t})             [OK]
+  Kutia me rekomandim shëndetësor.
+
+HistoryCard({item, lang, t, isExpanded, onToggle}) [OK]
+  Header: datë, % probabilitet, badge, chevron.
+  Kur expanded: grid 8 vlerash me getFieldStatus + RecommendationBox.
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/components/ui/PredictionModal.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+PredictionModal({result, onClose, inline, formValues, lang}) [OK]
+  probability % nga result.probability.
+  isHypoglycemia nga formValues.Glucose < 70.
+  translateRisk, getPredictionText, groupText nga result (risk_group).
+  useEffect: nëse jo inline → body overflow hidden + modal-open (Navbar fshihet).
+  Bar progresi me % ose "100% Hipoglikemi".
+  4 InfoCard: parashikim, model, K-Means, konfidencë.
+  cleanBackendMessage për tekstin nga API.
+
+InfoCard({label, value})               [OK]  kuti e vogël në modal
+
+translateRisk(risk, lang)                [OK]  I ulet/Mesatar/I lartë ↔ EN
+
+getPredictionText(type, prediction, lang) [OK]  Diabetik / Jo Diabetik
+
+getDefaultMessage(...)                 [OK]  fallback nëse s’ka message
+
+getEnglishMessage(...)                 [OK]  përkthim i thjeshtë mesazhesh
+
+cleanBackendMessage(...)               [OK]  pastron/përkthen mesazhin e backend
+
+──────────────────────────────────────────────────────────────────────────────
+FILE: frontend/src/components/ui/OCRDataCharts.jsx
+──────────────────────────────────────────────────────────────────────────────
+
+ChartJS.register(...)                    [OK]  regjistron modulet Chart.js
+
+Konstante: FIELD_ORDER, NORMAL_RANGES, FEATURE_WEIGHTS, TRANSLATIONS [OK]
+
+export default function OCRDataCharts(...)  [OK]
+  Merr extractedData (vlerat e dërguara), predictionResult, previousData.
+  Llogarit ngjyra për bar (normal/low/high) krahasuar me range.
+  Renderon: Bar chart (8 tregues), Radar (profil rreziku), Doughnut (% diabet),
+  mundësisht krahasim me previousData.
+  Tekste sipas lang sq/en.
+
+(Ky skedar është ~780 rreshta — logjika kryesore është vizualizim, jo API.)
+
+──────────────────────────────────────────────────────────────────────────────
+KOMPONENTË UI TË TJERË (shkurt)
+──────────────────────────────────────────────────────────────────────────────
+
+Page          — layout full-screen me variant ngjyrë
+Card          — container i bardhë për faqe
+Button        — buton me variant green/red, disabled, loading
+InputField    — input me label, icon, placeholder
+FormGrid      — <form> me grid
+ErrorBox      — shfaq mesazh gabimi nëse string jo bosh
+NavButton     — link ose button në navbar
+PageHeader    — titull faqe me badge
+ActionCard    — kartë me Link (Dashboard → Diabetes)
+LanguageSwitch— butona SQ / EN
+
+
+================================================================================
+RRJEDHA: SI LIDHEN FUNKSIONET (shembull parashikim)
+================================================================================
+
+1. Përdoruesi klikon Predict në DiabetesForm
+2. DiabetesPredict.handleSubmit → buildDiabetesPayload
+3. predictionApi.predictDiabetes → axios POST + Bearer
+4. deps.get_current_user → auth_service.get_current_user_from_token
+5. ml_controller.predict_diabetes → ml_service.diabetes
+6. ml/05_predict.predict_diabetes → RandomForest + KMeans
+7. override glucose<70 në controller
+8. INSERT lab_tests
+9. JSON kthehet → applyClinicalOverrides (frontend) → PredictionModal + OCRDataCharts
+10. Dashboard.getPredictionHistory lexon të njëjtat rreshta nga lab_tests
+
+
+================================================================================
+ÇKA TË KONTROLLOSH KUR DIÇKA NUK PUNON
+================================================================================
+
+• Porti axios (7001) vs uvicorn (8000)
+• Modelet .pkl + scalers.pkl ekzistojnë
+• Token në localStorage pas login
+• CORS nëse Vite përdor port tjetër nga 5173
+• OCR: LEADTOOLS ose OCR_DEMO_FALLBACK=true
+• extract endpoint: në kod NUK kërkon Bearer — por axios e dërgon gjithsesi
+
+================================================================================
+                         FUND
+================================================================================

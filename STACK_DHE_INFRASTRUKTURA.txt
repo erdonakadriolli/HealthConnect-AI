@@ -1,0 +1,279 @@
+================================================================================
+        HEALTHCONNECT AI — STACK, SERVER, DATABAZË, ARKITEKTURË
+================================================================================
+
+================================================================================
+1. NE ÇKA ËSHTË ZHVILLUAR APLIKACIONI (TEKNOLOGJITË)
+================================================================================
+
+SHTRESA          | TEKNOLOGJI / VERSION (nga package.json / requirements)
+-----------------|------------------------------------------------------------
+Frontend         | JavaScript (ES modules), React 19, React DOM 19
+                 | React Router DOM 7 (rrugëtim SPA)
+                 | Vite 8 (build tool + dev server)
+                 | Axios 1.15 (HTTP klient)
+                 | Chart.js 4.5 + react-chartjs-2 (grafikë)
+                 | Lucide React (ikona)
+                 | CSS inline + index.css (pa Tailwind/Bootstrap)
+
+Backend API      | Python 3.10+
+                 | FastAPI (framework REST API)
+                 | Uvicorn (ASGI web server — ekzekuton FastAPI)
+                 | Pydantic v2 + pydantic-settings (validim & .env)
+                 | SQLAlchemy 2.x (ORM — lidhja me databazë)
+                 | python-jose (JWT), passlib + bcrypt (fjalëkalime)
+                 | python-multipart (upload skedarësh OCR)
+
+Machine Learning | scikit-learn (Random Forest, kNN, MLP, K-Means, etj.)
+                 | pandas, numpy, joblib
+                 | matplotlib, seaborn (vizualizime offline)
+                 | Jupyter Notebook (healthconnect_ml.ipynb)
+
+OCR              | LEADTOOLS OCR SDK v23 (Python package: leadtools)
+                 | Mbështet: JPEG, PNG, WEBP, GIF, TIFF, PDF
+
+Databazë         | SQLite (default në zhvillim)
+                 | PostgreSQL (opsional — përmes DATABASE_URL në .env)
+                 | psycopg2-binary në requirements (driver Postgres)
+
+Auth             | JWT (HS256) — access token + refresh token
+
+Zhvillim         | Windows (projekti dhe LEADTOOLS orientuar për Win)
+                 | Git për version control
+                 | Cursor / VS Code (IDE tipik)
+
+Projekt akademik | UBT — Laboratorike 2 & Machine Learning Models 2025-2026
+
+
+================================================================================
+2. WEB SERVER — ÇFARË PËRDORET
+================================================================================
+
+BACKEND (API):
+  • Web server: Uvicorn (ASGI)
+  • Komanda tipike:
+      cd backend
+      python -m uvicorn main:app --reload --port 8000
+  • FastAPI është aplikacioni; Uvicorn e shërben në HTTP.
+  • Në prodhim mund të përdoret edhe: Gunicorn + Uvicorn workers, ose
+    Hypercorn — por në kodin tuaj dokumentohet Uvicorn.
+
+FRONTEND (UI):
+  • Dev server: Vite (jo Apache/Nginx për zhvillim)
+  • Komanda:
+      cd frontend
+      npm run dev
+  • Vite servon React në HTTP dhe bën Hot Module Replacement (HMR).
+  • Build prodhim: npm run build → skedarë statikë në frontend/dist/
+    (mund të hostohen më vonë me Nginx, Vercel, etj. — nuk është konfiguruar
+     aktualisht; vercel.json është hequr nga repo).
+
+PËRMBLEDHJE:
+  | Rol              | Server softuer   |
+  |------------------|------------------|
+  | API REST         | Uvicorn          |
+  | Faqja React      | Vite (dev)       |
+  | WebSocket        | Uvicorn (i njëjti proces FastAPI) |
+
+
+================================================================================
+3. DATABAZA
+================================================================================
+
+DEFAULT (siç është në backend/app/database.py):
+  • Motor: SQLite
+  • URL: sqlite:///./healthconnectai.db
+  • Skedari krijohet në folderin backend/ kur starton serveri.
+  • Tabelat krijohen automatikisht: Base.metadata.create_all() në lifespan.
+
+OPSIONAL (produksion / README):
+  • PostgreSQL
+  • Në .env: DATABASE_URL=postgresql://user:pass@host:5432/dbname
+  • Skript manual SQL në skedarin "DB" në rrënjë (healthconnectaiDB) —
+    për dizajn Postgres, jo i lidhur automatikisht me SQLite.
+
+ORM:
+  • SQLAlchemy — të gjitha query-t përmes modeleve në app/models.py.
+
+TABELAT AKTIVE NË APP:
+  users, refresh_tokens, roles, user_roles, permissions, role_permissions,
+  patients, lab_tests
+
+
+================================================================================
+4. ARKITEKTURË E SISTEMIT
+================================================================================
+
+LLOJI: Client–Server me API REST + SPA (Single Page Application)
+
+Diagram:
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  KLIENT (Browser)                                           │
+  │  React SPA — Vite dev server                                │
+  │  Port: 5173 (ose 5174 nëse 5173 i zënë)                     │
+  └───────────────────────────┬─────────────────────────────────┘
+                              │ HTTP/JSON (Axios)
+                              │ Authorization: Bearer JWT
+                              ▼
+  ┌─────────────────────────────────────────────────────────────┐
+  │  SERVER APLIKACIONI                                         │
+  │  Uvicorn + FastAPI                                          │
+  │  Port: 8000 (dokumentuar) / 7001 (në axios.js — shiko §6)   │
+  │                                                             │
+  │  Controllers → Services → Repository (auth)                 │
+  │              → MLService → ml/05_predict.py                 │
+  │              → OCRService → LEADTOOLS                       │
+  └───────────────────────────┬─────────────────────────────────┘
+                              │ SQLAlchemy ORM
+                              ▼
+  ┌─────────────────────────────────────────────────────────────┐
+  │  DATABAZË                                                   │
+  │  SQLite (healthconnectai.db) ose PostgreSQL                 │
+  └─────────────────────────────────────────────────────────────┘
+
+PATTERN BACKEND (3 shtresa):
+  • Controller  — merr HTTP, validon me Pydantic, kthen përgjigje
+  • Service     — logjika e biznesit (auth, ML, OCR)
+  • Repository  — vetëm për auth (query/insert në DB)
+
+PATTERN FRONTEND:
+  • Pages       — faqe (Login, Dashboard, …)
+  • features/   — logjika e domain-it (diabetes, dashboard)
+  • components/ — UI i ripërdorshëm
+  • api/        — thirrje HTTP drejt backend-it
+
+ML:
+  • Offline: skriptet ml/00–08 trajnojnë modele
+  • Runtime: backend ngarkon .pkl dhe thërret predict_diabetes()
+
+
+================================================================================
+5. CILA PJESË LIDH FRONTEND-IN ME DATABAZËN
+================================================================================
+
+RREGULL I RËNDËSISHËM:
+  React NUK lidhet drejtpërdrejt me databazën. Asnjë driver SQL në frontend.
+
+Zinxhiri i plotë:
+
+  [1] React (Dashboard, Login, DiabetesPredict)
+        ↓
+  [2] api/axios.js + authApi.js / predictionApi.js
+        ↓  HTTP REST (JSON)
+  [3] FastAPI Controllers (auth_controller, ml_controller)
+        ↓
+  [4] Services (AuthService, MLService) + get_db()
+        ↓
+  [5] SQLAlchemy Session → engine → SQLite/PostgreSQL
+
+Shembuj konkret:
+
+  • Historik në Dashboard:
+      getPredictionHistory()
+      → GET /api/predict/history
+      → ml_controller.get_prediction_history
+      → db.query(LabTest) …
+
+  • Login:
+      loginUser()
+      → POST /api/auth/login
+      → AuthService.login
+      → db.query(User), INSERT refresh_tokens
+
+  • Parashikim + ruajtje:
+      predictDiabetes()
+      → POST /api/predict/diabetes
+      → ml_controller → INSERT lab_tests
+
+Pjesa që është "ura" midis UI dhe DB = BACKEND (FastAPI + SQLAlchemy).
+
+
+================================================================================
+6. PORTET QË PËRDOREN NË PROJEKT
+================================================================================
+
+  | Port   | Shërbimi              | Ku është definuar
+  |--------|------------------------|----------------------------------
+  | 5173   | Vite (frontend dev)    | Default Vite; CORS në main.py
+  | 5174   | Vite (alternativ)      | README — nëse 5173 i zënë
+  | 8000   | Uvicorn (backend API)  | README, qysh me ba run projektin.txt
+  | 7001   | Backend (në kod FE)    | frontend/src/api/axios.js baseURL
+
+  ⚠ MOSPËRPUTHJE:
+    axios.js thotë API → http://127.0.0.1:7001
+    Dokumentacioni thotë uvicorn → port 8000
+
+    Për të punuar, duhet i njëjti port:
+      OSE ndrysho axios.js në http://127.0.0.1:8000
+      OSE nis: uvicorn main:app --reload --port 7001
+
+  URL të tjera:
+    http://localhost:8000/docs     — Swagger UI (API)
+    http://localhost:5173          — Aplikacioni React (dev)
+
+  PostgreSQL (nëse përdoret): zakonisht 5432 (jo në kod frontend).
+
+
+================================================================================
+7. ALGORITMET / MODELET (MACHINE LEARNING)
+================================================================================
+
+DATASET:
+  • Pima Indians Diabetes (768 rreshta, 8 features + Outcome)
+  • Burim: datasets/diabetes.csv
+
+PREPROCESSING (02_preprocessing.py):
+  • Trajtim NaN (vlera 0 për disa kolona sipas konventës)
+  • Heqje outliers (metoda IQR)
+  • StandardScaler (normalizim)
+  • Train/Test split 80% / 20%
+
+KLASIFIKIM — 5 algoritme të trajnuara (03_train_models.py):
+  1. k-Nearest Neighbors (kNN)        — k=5, distancë Euclidean
+  2. Random Forest                    — 100 pemë, random_state=42
+  3. Logistic Regression              — solver lbfgs
+  4. MLP Neural Network (1 shtresë)   — 64 neurone, ReLU
+  5. MLP Neural Network (3 shtresa)   — 128-64-32, ReLU
+
+  NË PRODUCTION (API live):
+  ★ Random Forest — parashikim diabeti (diabetes_random_forest.pkl)
+  ★ StandardScaler — para se të hyjë në model
+
+UNSUPERVISED:
+  • K-Means Clustering (K=3) — grupe rreziku: i ulët / mesatar / i lartë
+  • Elbow method për zgjedhjen e K
+  • Përdoret bashkë me Random Forest në predict_diabetes()
+
+TRAJNIM SHTESË (offline, jo në çdo request):
+  • GridSearchCV — hyperparameter tuning (07)
+  • Stratified 5-Fold Cross-Validation (08)
+
+METRIKA:
+  • accuracy, precision, recall, F1, confusion matrix
+  • Rezultate në models/results.csv
+
+RREGULLA KLINIKE (jo ML, por në kod):
+  • Nëse Glucose < 70 mg/dL → override "Hipoglikemi" / rrezik i lartë
+    (backend ml_controller + frontend applyClinicalOverrides)
+
+OCR (jo ML klasik):
+  • LEADTOOLS OCR — nxjerr tekst nga imazh/PDF
+  • Regex + sinonime shumëgjuhëshe → mapon në 8 fusha numerike
+
+
+================================================================================
+8. PËRMBLEDHJE NJË FAQE (për prezantim / raport)
+================================================================================
+
+  Aplikacioni është zhvilluar si platformë web full-stack:
+  frontend me React dhe Vite, backend me Python FastAPI të shërbyer nga
+  Uvicorn, databazë relacionale SQLite (ose PostgreSQL), dhe modele
+  scikit-learn (Random Forest + K-Means) për parashikimin e rrezikut të
+  diabetit. Frontend-i komunikon vetëm me API-n REST; backend-i përmes
+  SQLAlchemy ruan përdoruesit dhe historikun e analizave. Portet kryesore:
+  5173 për UI, 8000 për API (me vërejtje për 7001 në axios.js).
+
+================================================================================
+                         FUND
+================================================================================
