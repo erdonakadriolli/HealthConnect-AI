@@ -1,26 +1,3 @@
-"""
-HealthConnect AI - Skripti 02: Preprocessing i te Dhenave
-==========================================================
-Autor: Erdona Kadriolli
-
-Qellimi: Pastron, pergatit dhe ndan te dhenat per trajnim modeli.
-
-Hapat:
-  1. Trajtim vlerash te munguara (zero ne kolona kritike per diabet)
-  2. Trajtim outliers (IQR method)
-  3. Normalizim/Skalim (StandardScaler)
-  4. Ndarje train/test (80/20 stratifikuar)
-  5. Ruajtje e te dhenave te pergatitura
-
-Inputi:
-  datasets/diabetes.csv
-
-Output:
-  datasets/processed/diabetes_train.csv
-  datasets/processed/diabetes_test.csv
-  datasets/processed/scalers.pkl
-"""
-
 import pandas as pd
 import pickle
 from pathlib import Path

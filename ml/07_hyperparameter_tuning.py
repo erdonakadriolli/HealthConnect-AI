@@ -1,23 +1,3 @@
-"""
-HealthConnect AI - Skripti 07: Hyperparameter Tuning
-=====================================================
-Autor: Erdona Kadriolli
-
-Qellimi: Gjetja e parametrave optimale per cdo model duke perdorur
-         GridSearchCV me 5-fold Cross-Validation.
-
-Si funksionon:
-  1. Per cdo model definojme nje "grid" me parametra te ndryshem
-  2. GridSearchCV provon TE GJITHA kombinimet e mundshme
-  3. Per cdo kombinim, perdor 5-fold Cross-Validation
-  4. Zgjedh kombinimin me F1-Score me te larte
-  5. Krahason me modelin origjinal
-
-Output:
-  models/tuned_*.pkl    (modelet e optimizuara)
-  models/tuning_results.csv (krahasimi origjinal vs tuned)
-"""
-
 import pandas as pd
 import numpy as np
 import pickle

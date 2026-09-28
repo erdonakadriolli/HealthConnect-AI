@@ -1,19 +1,3 @@
-"""
-HealthConnect AI — Pipeline i Plotë i Machine Learning
-======================================================
-Ky skedar konsolidon të gjithë pipeline-in e Machine Learning për projektin:
-1. Leximi dhe Inspektimi i Dataset-it (Pima Indians Diabetes)
-2. Preprocessing (Zëvendësimi i vlerave 0 me medianën, IQR outlier capping)
-3. Ndarja Train/Test (80/20) dhe Skalimi (StandardScaler)
-4. Trajnimi i 5 Modeleve Supervised (k-NN, Random Forest, Logistic Regression, 2x MLP)
-5. Cross-Validation (Stratified 5-Fold) per vleresim te plote
-6. Grupimi Unsupervised me K-Means (K=3) per nivelet e rrezikut
-7. Ruajtja e modeleve (.pkl) dhe testimi i parashikimit
-
-Si ta ekzekutoni:
-    python ml/healthconnect_ml.py
-"""
-
 import os
 import sys
 import pickle

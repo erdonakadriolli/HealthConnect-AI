@@ -1,14 +1,8 @@
-me dhez frontend:
-cd frontend 
-cd scr
-h1: npm install
-h2: npm run dev 
+cd C:\Users\W11\Desktop\HealthConnect-AI\backend
+.venv\Scripts\activate
+python -m uvicorn main:app --reload --port 7001
 
 
-me dhez backend:
-cd backend
-h1: python -m venv .venv
-h2: .venv\Scripts\activate
-h3:python -m uvicorn main:app --reload --port 8000
+cd C:\Users\W11\Desktop\HealthConnect-AI\frontend
+npm run dev
 
-copy paste

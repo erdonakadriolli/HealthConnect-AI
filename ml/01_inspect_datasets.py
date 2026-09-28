@@ -1,16 +1,3 @@
-"""
-HealthConnect AI - Skripti 01: Inspektimi i Dataset-it
-=======================================================
-Autor: Erdona Kadriolli
-Qellimi: Lexon dataset-in e Diabetit, tregon statistika baze
-         dhe verifikon strukturen.
-
-Si te perdoret:
-    1. Vendos CSV-ne ne dosjen datasets/:
-       - datasets/diabetes.csv
-    2. Ekzekuto: python 01_inspect_datasets.py
-"""
-
 import pandas as pd
 from pathlib import Path
 
