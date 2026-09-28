@@ -1,0 +1,75 @@
+================================================================
+  HEALTHCONNECT AI — DETAJET E PROJEKTIT
+================================================================
+
+1) GJUHET
+   Backend/ML: Python 3
+   Frontend:   JavaScript (JSX)
+   DB:         SQL (SQLite dev / PostgreSQL prod)
+   Stilizim:   CSS
+
+2) BACKEND — FastAPI
+   FastAPI, Uvicorn, SQLAlchemy 2.0, Pydantic, JWT (python-jose),
+   bcrypt, LEADTOOLS OCR SDK.
+   Arkitektura: Controllers / Services / Repositories.
+
+3) FRONTEND — React + Vite
+   React 19, Vite 8 (port 9080), react-router-dom 7, axios,
+   chart.js + react-chartjs-2, lucide-react.
+
+4) MACHINE LEARNING (scikit-learn)
+   Dataset: Pima Indians Diabetes (768 rreshta, 8 features).
+   Algoritmet:
+     - kNN
+     - Random Forest
+     - Logistic Regression
+     - MLP Arkitektura 1 (64)
+     - MLP Arkitektura 2 (128, 64, 32)
+     - K-Means (unsupervised)
+   Teknikat: StandardScaler, IQR outliers, median imputation,
+             train/test 80/20, GridSearchCV 5-fold.
+   Metrikat: Accuracy, Precision, Recall, F1, Confusion Matrix,
+             Silhouette, ARI.
+
+5) DATABAZA (24 tabela)
+   Sistemi (10): users, roles, user_roles, permissions,
+     role_permissions, refresh_tokens, audit_logs,
+     notifications, settings, files
+   Mjekesore (14): patients, doctors, specializations, clinics,
+     appointments, medical_records, lab_tests, prescriptions,
+     medications, symptoms, symptom_reports, vaccinations,
+     emergency_contacts, insurance_policies
+   AuditMixin ne cdo tabele (created_at, updated_at, created_by).
+   Tabela kryesore ML: lab_tests (me ml_prediction, ml_confidence).
+
+6) API ENDPOINTS
+   Publike:
+     GET  /health
+   Auth (/api/auth):
+     POST /register
+     POST /login
+     POST /refresh
+     GET  /me
+     GET  /admin/users        (RBAC: manage_users)
+   ML (/api/predict):
+     POST /diabetes           (parashikim + ruajtje ne lab_tests)
+     POST /diabetes/extract   (OCR nga imazh)
+     GET  /history
+   WebSocket:
+     WS   /ws/notifications/{user_id}
+     WS   /ws/chat/{room_id}
+   Docs: /docs (Swagger), /redoc
+
+7) SIGURIA
+   JWT access (30 min) + refresh (7 dite, me rotation),
+   bcrypt, RBAC (admin/doctor/patient), audit logs, CORS.
+
+8) NDARJA E PUNEVE
+   Erdona Kadriolli — Data & ML Engineer
+     ml/ (9 skripta), 5 modele + K-Means, OCR LEADTOOLS,
+     ml_controller.py, dokumentimi (README, Raport).
+   Fatlum Syla — Backend Developer
+     backend/ (FastAPI, 24 tabela, JWT, RBAC, WebSockets).
+   Yll Bytyqi — Frontend Developer
+     frontend/ (React + Vite, pages, dashboard, Chart.js, SQ/EN).
+   Version control: Git + GitHub.

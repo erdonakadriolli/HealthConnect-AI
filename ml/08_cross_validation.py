@@ -1,21 +1,3 @@
-"""
-HealthConnect AI - Skripti 08: Cross-Validation
-================================================
-Autor: Erdona Kadriolli
-
-Qellimi: Vlereson modelet me k-Fold Cross-Validation per te marre
-         rezultate me te besueshme sesa ndarja train/test e vetme.
-
-Si funksionon:
-  1. Per cdo model, kryen 5-fold dhe 10-fold Cross-Validation
-  2. Llogarit Accuracy, Precision, Recall, F1-Score per cdo fold
-  3. Tregon mesataren ± deviacionin standard
-  4. Krahason me rezultatet e ndarjes train/test te vetme
-
-Output:
-  models/cross_validation_results.csv
-"""
-
 import pandas as pd
 import warnings
 from pathlib import Path

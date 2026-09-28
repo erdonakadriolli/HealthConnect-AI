@@ -1,36 +1,3 @@
-"""
-HealthConnect AI - Skripti 05: Funksioni Predict
-=================================================
-Autor: Erdona Kadriolli
-
-Qellimi: Ky skript eshte "ura" mes modeleve ML dhe backend-it.
-         Backend-i e importon kete modul ne FastAPI dhe e therret
-         kur nje mjek fut te dhenat e nje pacienti.
-
-Perdorimi:
-  from ml.predict import predict_diabetes
-
-  result = predict_diabetes({
-      "Pregnancies": 2,
-      "Glucose": 148,
-      "BloodPressure": 72,
-      "SkinThickness": 35,
-      "Insulin": 0,
-      "BMI": 33.6,
-      "DiabetesPedigreeFunction": 0.627,
-      "Age": 50
-  })
-
-  # Rezultati:
-  # {
-  #   "prediction": 1,
-  #   "probability": 0.82,
-  #   "risk_level": "I larte",
-  #   "model_used": "Random Forest",
-  #   "risk_group": "Rrezik i Larte"
-  # }
-"""
-
 import pickle
 import pandas as pd
 from pathlib import Path

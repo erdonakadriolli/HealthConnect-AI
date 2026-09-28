@@ -1,18 +1,3 @@
-"""
-HealthConnect AI - Skripti 06: Vizualizimi i Rezultateve
-=========================================================
-Autor: Erdona Kadriolli
-
-Qellimi: Krijon grafike profesionale per raportin dhe dashboard-in.
-
-Output (ne dosjen visualizations/):
-  1. confusion_matrix_diabetes.png
-  2. model_comparison.png
-  3. kmeans_clusters.png
-  4. feature_importance.png
-  5. metrics_radar.png
-"""
-
 import pandas as pd
 import numpy as np
 import pickle

@@ -1,15 +1,3 @@
-"""
-HealthConnect AI - Skripti 00: Gjenerimi i Dataset-it
-======================================================
-Autor: Erdona Kadriolli
-
-Qellimi: Gjeneron dataset-in e Diabetit me strukture identike me Pima Indians.
-
-Te dhenat jane te simuluara mbi baze statistikash publike te dataset-it origjinal.
-Per produkt final akademik, zevendesoje me dataset-in real nga:
-  - https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database
-"""
-
 import numpy as np
 import pandas as pd
 from pathlib import Path

@@ -1,22 +1,3 @@
-"""
-HealthConnect AI - Skripti 04: K-Means Clustering
-==================================================
-Autor: Erdona Kadriolli
-
-Qellimi: Grupimi i pacienteve sipas rrezikut shendetesor
-         pa etiketa paraprake (unsupervised learning).
-
-Hapat:
-  1. Elbow Method - gjetja e numrit optimal te clusters (K)
-  2. K-Means trajnimi me K optimal
-  3. Analiza e cdo grupi (profili i pacientit)
-  4. Krahasimi me etiketat reale (sa mire i ndau K-Means?)
-  5. Ruajtja e rezultateve
-
-Dataset: Diabeti (Pima Indians) - me i miri per clustering
-         sepse ka me shume rreshta (768) dhe features numerike
-"""
-
 import pandas as pd
 import pickle
 from pathlib import Path

@@ -1,27 +1,3 @@
-"""
-HealthConnect AI - Skripti 03: Trajnimi i Modeleve ML
-======================================================
-Autor: Erdona Kadriolli
-
-Modelet:
-  1. k-NN (K-Nearest Neighbors)
-  2. Random Forest
-  3. Logistic Regression
-  4. Neural Network MLP - Arkitektura 1 (e thjesht)
-  5. Neural Network MLP - Arkitektura 2 (e thelle)
-
-Dataset:
-  - Diabeti (Pima Indians)
-
-Output:
-  models/diabetes_knn.pkl
-  models/diabetes_rf.pkl
-  models/diabetes_logreg.pkl
-  models/diabetes_mlp1.pkl
-  models/diabetes_mlp2.pkl
-  models/results.csv  (te gjitha metrikat)
-"""
-
 import pandas as pd
 import pickle
 from pathlib import Path

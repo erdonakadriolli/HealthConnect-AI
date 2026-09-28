@@ -1,0 +1,46 @@
+====================================================================
+  PJESA E ERDONES - MACHINE LEARNING (dosja /ml)
+====================================================================
+
+Erdona ka ndertuar pipeline-in e plote te Inteligjences Artificiale
+per parashikimin e diabetit, duke perdorur dataset-in Pima Indians.
+
+--------------------------------------------------------------------
+  SKEDARET E PUNUAR (9 skripta Python + 1 Notebook)
+--------------------------------------------------------------------
+
+  00_generate_datasets.py    - Gjeneron dataset-in (768 pacient)
+  01_inspect_datasets.py     - Inspekton null, zero, balancen
+  02_preprocessing.py        - Pastron te dhenat (median + IQR),
+                               ndan 80/20 dhe skalon me StandardScaler
+  03_train_models.py         - Trajnon 5 modele:
+                                 * kNN
+                                 * Random Forest
+                                 * Logistic Regression
+                                 * MLP Arkitektura 1 (64)
+                                 * MLP Arkitektura 2 (128,64,32)
+  04_kmeans_clustering.py    - K-Means K=3 (Rrezik Ulet/Mesatar/Larte)
+  05_predict.py              - Teston parashikimin per nje pacient
+  06_visualizations.py       - Confusion Matrix, PCA, krahasime
+  07_hyperparameter_tuning.py- GridSearchCV per te 4 modelet
+  08_cross_validation.py     - Stratified 5-Fold CV
+  healthconnect_ml.py/.ipynb - Pipeline i konsoliduar akademik
+
+--------------------------------------------------------------------
+  REZULTATET (dosja /models)
+--------------------------------------------------------------------
+
+  - 10 modele te ruajtura (.pkl): 5 baseline + 4 tuned + 1 K-Means
+  - diabetes_production_model.pkl -> modeli me i mire (F1)
+  - 4 CSV me rezultate te vleresimit
+
+--------------------------------------------------------------------
+  RRJEDHA
+--------------------------------------------------------------------
+
+  diabetes.csv -> Inspektim -> Pastrim -> Split 80/20 -> Skalim
+       -> Trajnim (Supervised + Unsupervised)
+       -> Cross-Validation -> Hyperparameter Tuning
+       -> Vizualizime -> Modeli Final per Backend
+
+====================================================================
